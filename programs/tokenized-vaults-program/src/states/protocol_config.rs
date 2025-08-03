@@ -44,15 +44,13 @@ impl ProtocolConfig{
 
 }
 
-// /// Emitted when create or update a config
-// #[event]
-// #[cfg_attr(feature = "client", derive(Debug))]
-// pub struct ConfigChangeEvent {
-//     pub index: u16,
-//     pub owner: Pubkey,
-//     pub protocol_fee_rate: u32,
-//     pub trade_fee_rate: u32,
-//     pub tick_spacing: u16,
-//     pub fund_fee_rate: u32,
-//     pub fund_owner: Pubkey,
-// }
+/// Emitted when create or update a config
+#[event]
+#[cfg_attr(feature = "client", derive(Debug))]
+pub struct ConfigChangeEvent {
+    //pub index: u16,
+    pub owner: Pubkey,
+    pub protocol_fee: u32,
+    pub status: u8,
+  
+}
