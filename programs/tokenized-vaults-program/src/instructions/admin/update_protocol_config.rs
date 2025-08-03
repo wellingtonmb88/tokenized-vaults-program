@@ -13,13 +13,13 @@ pub struct UpdateProtocolConfig<'info> {
     pub protocol_config: Account<'info, ProtocolConfig>,
 }
 
-pub fn update_amm_config(ctx: Context<UpdateProtocolConfig>, param: u8, value: u32) -> Result<()> {
+pub fn update_protocol_config(ctx: Context<UpdateProtocolConfig>, param: u8, value: u32) -> Result<()> {
     let protocol_config = &mut ctx.accounts.protocol_config;
     let match_param = Some(param);
     match match_param {
-        // Some(0) => update_trade_fee_rate(amm_config, value),
-        // Some(1) => update_protocol_fee_rate(amm_config, value),
-        // Some(2) => update_fund_fee_rate(amm_config, value),
+        // Some(0) => update_trade_fee_rateprotocol_config, value),
+        // Some(1) => update_protocol_fee_rate(protocol_config, value),
+        // Some(2) => update_fund_fee_rate(protocol_config, value),
         Some(0) => {
             let new_owner = *ctx.remaining_accounts.iter().next().unwrap().key;
             set_new_owner(protocol_config, new_owner);
