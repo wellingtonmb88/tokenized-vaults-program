@@ -13,6 +13,8 @@ default = []
 cpi = ["no-entrypoint"]
 no-entrypoint = []
 no-idl = []
+devnet = []
+client = []
 no-log-ix-name = []
 idl-build = ["anchor-lang/idl-build"]
 
