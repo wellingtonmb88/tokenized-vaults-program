@@ -1,6 +1,6 @@
-
 use crate::error::ErrorCode;
 use anchor_lang::prelude::*;
+use crate::state::ProtocolStatus;
 
 pub const PROTOCOL_CONFIG_SEED: &str = "protocol_config";
 
@@ -9,7 +9,7 @@ pub const PROTOCOL_CONFIG_SEED: &str = "protocol_config";
 pub struct ProtocolConfig{
     pub admin_authority: Pubkey,
     pub protocol_fees:u64,
-    pub status:u8,
+    pub status:ProtocolStatus,
     pub bump:u8,
 }
 
