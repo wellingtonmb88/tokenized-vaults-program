@@ -4,6 +4,10 @@ use anchor_lang::prelude::*;
 use core::mem::size_of;
 
 pub const PROTOCOL_CONFIG_SEED: &str = "protocol_config";
+/// Scale: 1% = 10_000 bps → 100% = 1_000_000
+pub const BPS: u64 = 10_000;
+/// High fee for transaction: 10%
+pub const HIGH_FEES: u64 = 10 * BPS; // 100_000
 
 #[derive(Default, Debug)]
 #[account(discriminator = 1)]
