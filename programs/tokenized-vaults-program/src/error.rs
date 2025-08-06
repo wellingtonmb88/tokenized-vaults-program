@@ -10,4 +10,7 @@ pub enum ErrorCode {
 
     #[msg("ProtocolConfig already initialized")]
     ProtocolConfigInitialized,
+
+    #[msg("Protocol is already paused")]
+    ProtocolAlreadyPaused,
 }

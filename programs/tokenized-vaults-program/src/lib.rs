@@ -13,6 +13,9 @@ declare_id!("63JRAaqV5J7RZ2muRqfhBoNyadtLSChKenKZqjvt4gyL");
 
 #[program]
 pub mod tokenized_vaults_program {
+
+    use crate::instructions::pause_protocol;
+
     use super::*;
 
     #[instruction(discriminator = 0)]
@@ -21,5 +24,9 @@ pub mod tokenized_vaults_program {
         protocol_fees: u64,
     ) -> Result<()> {
         init_protocol_config::handler(ctx, protocol_fees)
+    }
+
+    pub fn pause_protocol(ctx: Context<PauseProtocol>) -> Result<()> {
+        pause_protocol::pause_handler(ctx)
     }
 }
