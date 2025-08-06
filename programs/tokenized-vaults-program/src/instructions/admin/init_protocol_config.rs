@@ -13,7 +13,7 @@ pub struct InitProtocolConfig<'info> {
     #[account(
         init,
         payer = admin_authority,
-        space = ProtocolConfig::LEN,
+        space = 8+ProtocolConfig::LEN,
         seeds = [PROTOCOL_CONFIG_SEED.as_bytes()],
         bump
     )]
@@ -22,21 +22,26 @@ pub struct InitProtocolConfig<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn initialize(ctx: Context<InitProtocolConfig>, protocol_fees: u64) -> Result<()> {
-    let config = &mut ctx.accounts.protocol_config;
-    let bump = ctx.bumps.protocol_config;
+impl<'info> InitProtocolConfig<'info> {
+    pub fn initialize(&mut self, protocol_fees: u64, bump: u8) -> Result<()> {
+        let config = &mut self.protocol_config;
+        // Check protocol config is not already initialized.
+        require!(
+            config.admin_authority == Pubkey::default(),
+            ErrorCode::ProtocolConfigInitialized
+        );
 
-    // Check that fee does not exceed 10% (100_000 BPS).
+        config.admin_authority = self.admin_authority.key();
+        config.protocol_fees = protocol_fees;
+        config.status = ProtocolStatus::Active;
+        config.bump = bump;
+        Ok(())
+    }
+}
+
+pub fn handler(ctx: Context<InitProtocolConfig>, protocol_fees: u64) -> Result<()> {
+    // Check that fee not exceed 10% (100_000 BPS).
     require!(protocol_fees <= HIGH_FEES, ErrorCode::FeeTooHigh);
-    // Check protocol config is not already initialized.
-    require!(
-        config.admin_authority == Pubkey::default(),
-        ErrorCode::ProtocolConfigInitialized
-    );
-
-    config.admin_authority = ctx.accounts.admin_authority.key();
-    config.protocol_fees = protocol_fees;
-    config.status = ProtocolStatus::Active;
-    config.bump = bump;
-    Ok(())
+    let bump = ctx.bumps.protocol_config;
+    ctx.accounts.initialize(protocol_fees, bump)
 }

@@ -16,6 +16,6 @@ pub mod tokenized_vaults_program {
         ctx: Context<InitProtocolConfig>,
         protocol_fees: u64,
     ) -> Result<()> {
-        init_protocol_config::initialize(ctx, protocol_fees)
+        init_protocol_config::handler(ctx, protocol_fees)
     }
 }
