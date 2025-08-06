@@ -1,15 +1,14 @@
-#![allow(deprecated,unexpected_cfgs)]
+#![allow(deprecated, unexpected_cfgs)]
 use anchor_lang::prelude::*;
 
 use crate::error::ErrorCode;
 use crate::state::*;
 
 #[derive(Accounts)]
-pub struct InitProtocolConfig<'info>{
+pub struct InitProtocolConfig<'info> {
     // The admin authority that is initializing protocol config.
     #[account(mut)]
     pub admin_authority: Signer<'info>,
-
 
     #[account(
         init,
@@ -20,23 +19,24 @@ pub struct InitProtocolConfig<'info>{
     )]
     pub protocol_config: Account<'info, ProtocolConfig>,
 
-    pub system_program: Program<'info,System>,
-    
+    pub system_program: Program<'info, System>,
 }
 
-impl<'info> InitProtocolConfig<'info> {
-    pub fn initialize(&mut self, fees: u64, bump:u8,) -> Result<()> {
-        let config = &mut self.protocol_config;
-        // Check that fee not exceed 10% (100_000 ppm).
-        require!(fees <= 100_000, ErrorCode::FeeTooHigh);
-        // Check protocol config is not already initialized.
-        require!(config.admin_authority == Pubkey::default(), ErrorCode::AlreadyInitialized);
+pub fn initialize(ctx: Context<InitProtocolConfig>, protocol_fees: u64) -> Result<()> {
+    let config = &mut ctx.accounts.protocol_config;
+    let bump = ctx.bumps.protocol_config;
 
-        config.admin_authority = self.admin_authority.key();
-        config.protocol_fees = fees;
-        config.status = ProtocolStatus::Active;
-        config.bump = bump;
-        Ok(())
-    }
+    // Check that fee does not exceed 10% (100_000 BPS).
+    require!(protocol_fees <= HIGH_FEES, ErrorCode::FeeTooHigh);
+    // Check protocol config is not already initialized.
+    require!(
+        config.admin_authority == Pubkey::default(),
+        ErrorCode::ProtocolConfigInitialized
+    );
+
+    config.admin_authority = ctx.accounts.admin_authority.key();
+    config.protocol_fees = protocol_fees;
+    config.status = ProtocolStatus::Active;
+    config.bump = bump;
+    Ok(())
 }
-

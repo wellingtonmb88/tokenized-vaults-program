@@ -2,13 +2,12 @@ use anchor_lang::prelude::*;
 
 #[error_code]
 pub enum ErrorCode {
-   
     #[msg("Not approved")]
     NotApproved,
 
-    #[msg("Fee cannot exceed 100% (1_000_000 parts per million)")]
+    #[msg("Fee cannot exceed 10% (1% = 10 * 10_000 = 100_000)")]
     FeeTooHigh,
 
     #[msg("ProtocolConfig already initialized")]
-    AlreadyInitialized,
+    ProtocolConfigInitialized,
 }
