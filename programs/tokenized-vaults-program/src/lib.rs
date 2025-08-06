@@ -27,6 +27,6 @@ pub mod tokenized_vaults_program {
     }
 
     pub fn pause_protocol(ctx: Context<PauseProtocol>) -> Result<()> {
-        pause_protocol::pause_handler(ctx)
+        pause_protocol::handler(ctx)
     }
 }

@@ -33,6 +33,6 @@ impl<'info> PauseProtocol<'info> {
         Ok(())
     }
 }
-pub fn pause_handler(ctx: Context<PauseProtocol>) -> Result<()> {
+pub fn handler(ctx: Context<PauseProtocol>) -> Result<()> {
     ctx.accounts.pause()
 }
