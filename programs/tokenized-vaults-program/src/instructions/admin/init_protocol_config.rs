@@ -24,17 +24,8 @@ pub struct InitProtocolConfig<'info> {
 
 impl<'info> InitProtocolConfig<'info> {
     pub fn initialize(&mut self, protocol_fees: u64, bump: u8) -> Result<()> {
-        let config = &mut self.protocol_config;
-        // Check protocol config is not already initialized.
-        require!(
-            config.admin_authority == Pubkey::default(),
-            ErrorCode::ProtocolConfigInitialized
-        );
-
-        config.admin_authority = self.admin_authority.key();
-        config.protocol_fees = protocol_fees;
-        config.status = ProtocolStatus::Active;
-        config.bump = bump;
+        self.protocol_config
+            .initialize(self.admin_authority.key(), protocol_fees, bump)?;
         Ok(())
     }
 }
