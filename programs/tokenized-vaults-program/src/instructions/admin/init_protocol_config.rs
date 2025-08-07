@@ -1,6 +1,7 @@
 #![allow(deprecated, unexpected_cfgs)]
 use anchor_lang::prelude::*;
 
+use crate::constants::HIGH_FEES;
 use crate::error::ErrorCode;
 use crate::state::*;
 
@@ -13,7 +14,7 @@ pub struct InitProtocolConfig<'info> {
     #[account(
         init,
         payer = admin_authority,
-        space = 8+ProtocolConfig::LEN,
+        space = ProtocolConfig::DISCRIMINATOR.len() +core::mem::size_of::<ProtocolConfig>(),
         seeds = [PROTOCOL_CONFIG_SEED.as_bytes()],
         bump
     )]
