@@ -92,5 +92,29 @@ describe("tokenized-vaults-program", () => {
     }
   });
 
+  describe("pause_protocol", () => {
+    it("Pause Protocol", async () => {
+      const protocolFees = new anchor.BN(5000); // 5% en ppm 
 
+      const txSignature = await program.methods
+        .pauseProtocol()
+        .accounts({
+          adminAuthority: admin.publicKey,
+        })
+        .signers([admin])
+        .rpc();
+      console.log(`Transaction signature: ${txSignature}`);
+      // Get state of account protocol config
+      const protocolConfigAccount = await program.account.protocolConfig.fetch(protocolConfigPda);
+
+      // Verify initialized account state
+      expect(protocolConfigAccount.adminAuthority.toBase58()).to.equal(admin.publicKey.toBase58());
+      expect(protocolConfigAccount.protocolFees.toNumber()).to.equal(protocolFees.toNumber());
+      console.log("Status:", protocolConfigAccount.status);
+      expect(protocolConfigAccount.status.paused).to.not.be.undefined;
+      expect(protocolConfigAccount.bump).to.equal(bump);
+    });
+  })
 });
+
+

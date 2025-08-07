@@ -48,4 +48,15 @@ impl ProtocolConfig {
         self.bump = bump;
         Ok(())
     }
+
+    pub fn pause(&mut self) -> Result<()> {
+        // Check protocol is not already paused.
+        require!(
+            self.status == ProtocolStatus::Active,
+            ErrorCode::ProtocolAlreadyPaused
+        );
+
+        self.status = ProtocolStatus::Paused;
+        Ok(())
+    }
 }
