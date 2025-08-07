@@ -22,14 +22,7 @@ pub struct PauseProtocol<'info> {
 
 impl<'info> PauseProtocol<'info> {
     pub fn pause(&mut self) -> Result<()> {
-        let config = &mut self.protocol_config;
-        // Check protocol is not already paused.
-        require!(
-            config.status == ProtocolStatus::Active,
-            ErrorCode::ProtocolAlreadyPaused
-        );
-
-        config.status = ProtocolStatus::Paused;
+        self.protocol_config.pause()?;
         Ok(())
     }
 }

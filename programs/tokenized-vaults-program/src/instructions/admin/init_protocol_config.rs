@@ -1,7 +1,6 @@
 #![allow(deprecated, unexpected_cfgs)]
 use anchor_lang::prelude::*;
 
-
 use crate::state::*;
 
 #[derive(Accounts)]
@@ -31,7 +30,6 @@ impl<'info> InitProtocolConfig<'info> {
 }
 
 pub fn handler(ctx: Context<InitProtocolConfig>, protocol_fees: u64) -> Result<()> {
-    
     let bump = ctx.bumps.protocol_config;
     ctx.accounts.initialize(protocol_fees, bump)
 }
