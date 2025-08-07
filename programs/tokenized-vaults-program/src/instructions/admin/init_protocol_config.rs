@@ -1,8 +1,7 @@
 #![allow(deprecated, unexpected_cfgs)]
 use anchor_lang::prelude::*;
 
-use crate::constants::HIGH_FEES;
-use crate::error::ErrorCode;
+
 use crate::state::*;
 
 #[derive(Accounts)]
@@ -32,8 +31,7 @@ impl<'info> InitProtocolConfig<'info> {
 }
 
 pub fn handler(ctx: Context<InitProtocolConfig>, protocol_fees: u64) -> Result<()> {
-    // Check that fee not exceed 10% (100_000 BPS).
-    require!(protocol_fees <= HIGH_FEES, ErrorCode::FeeTooHigh);
+    
     let bump = ctx.bumps.protocol_config;
     ctx.accounts.initialize(protocol_fees, bump)
 }
