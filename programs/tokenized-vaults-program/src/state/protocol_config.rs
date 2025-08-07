@@ -1,7 +1,7 @@
+use crate::constants::HIGH_FEES;
 use crate::error::ErrorCode;
 use crate::state::ProtocolStatus;
 use anchor_lang::prelude::*;
-use core::mem::size_of;
 
 pub const PROTOCOL_CONFIG_SEED: &str = "protocol_config";
 
@@ -27,6 +27,9 @@ impl ProtocolConfig {
             self.admin_authority == Pubkey::default(),
             ErrorCode::ProtocolConfigInitialized
         );
+
+        // Check that fee not exceed 10% (100_000 BPS).
+        require!(protocol_fees <= HIGH_FEES, ErrorCode::FeeTooHigh);
 
         self.set_inner(admin_authority, protocol_fees, ProtocolStatus::Active, bump)?;
         Ok(())
