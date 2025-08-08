@@ -1,16 +1,15 @@
 use crate::constants::HIGH_FEES;
-use crate::error::ErrorCode;
-use crate::state::ProtocolStatus;
+use crate::error::TokenizedVaultsErrorCode;
+use crate::ProtocolStatus;
 use anchor_lang::prelude::*;
 
-pub const PROTOCOL_CONFIG_SEED: &str = "protocol_config";
+pub const PROTOCOL_CONFIG_SEED: &str = "protocol_config:";
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, InitSpace)]
 #[account(discriminator = 1)]
-
 pub struct ProtocolConfig {
     pub admin_authority: Pubkey,
-    pub protocol_fees: u64,
+    pub protocol_fees: u32,
     pub status: ProtocolStatus,
     pub bump: u8,
 }
@@ -19,17 +18,20 @@ impl ProtocolConfig {
     pub fn initialize(
         &mut self,
         admin_authority: Pubkey,
-        protocol_fees: u64,
+        protocol_fees: u32,
         bump: u8,
     ) -> Result<()> {
         // Check protocol config is not already initialized.
         require!(
             self.admin_authority == Pubkey::default(),
-            ErrorCode::ProtocolConfigInitialized
+            TokenizedVaultsErrorCode::ProtocolConfigInitialized
         );
 
         // Check that fee not exceed 10% (100_000 BPS).
-        require!(protocol_fees <= HIGH_FEES, ErrorCode::FeeTooHigh);
+        require!(
+            protocol_fees <= HIGH_FEES,
+            TokenizedVaultsErrorCode::FeeTooHigh
+        );
 
         self.set_inner(admin_authority, protocol_fees, ProtocolStatus::Active, bump)?;
         Ok(())
@@ -38,7 +40,7 @@ impl ProtocolConfig {
     pub fn set_inner(
         &mut self,
         admin_authority: Pubkey,
-        protocol_fees: u64,
+        protocol_fees: u32,
         status: ProtocolStatus,
         bump: u8,
     ) -> Result<()> {
@@ -53,7 +55,7 @@ impl ProtocolConfig {
         // Check protocol is not already paused.
         require!(
             self.status == ProtocolStatus::Active,
-            ErrorCode::ProtocolAlreadyPaused
+            TokenizedVaultsErrorCode::ProtocolAlreadyPaused
         );
 
         self.status = ProtocolStatus::Paused;

@@ -1,5 +1,4 @@
 #![allow(deprecated, unexpected_cfgs)]
-use crate::error::ErrorCode;
 use crate::state::*;
 use anchor_lang::prelude::*;
 
