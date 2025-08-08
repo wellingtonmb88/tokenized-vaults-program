@@ -22,14 +22,14 @@ pub struct InitProtocolConfig<'info> {
 }
 
 impl<'info> InitProtocolConfig<'info> {
-    pub fn initialize(&mut self, protocol_fees: u64, bump: u8) -> Result<()> {
+    pub fn initialize(&mut self, protocol_fees: u32, bump: u8) -> Result<()> {
         self.protocol_config
             .initialize(self.admin_authority.key(), protocol_fees, bump)?;
         Ok(())
     }
 }
 
-pub fn handler(ctx: Context<InitProtocolConfig>, protocol_fees: u64) -> Result<()> {
+pub fn handler(ctx: Context<InitProtocolConfig>, protocol_fees: u32) -> Result<()> {
     let bump = ctx.bumps.protocol_config;
     ctx.accounts.initialize(protocol_fees, bump)
 }
