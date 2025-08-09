@@ -43,4 +43,7 @@ pub enum TokenizedVaultsErrorCode {
 
     #[msg("Invalid mint")]
     InvalidMint,
+
+    #[msg("Invalid amount")]
+    InvalidAmount,
 }
