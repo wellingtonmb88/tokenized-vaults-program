@@ -1,3 +1,5 @@
+use anchor_lang::prelude::*;
+
 /// Scale: 1% = 10_000 bps → 100% = 1_000_000
 pub const BPS: u32 = 10_000;
 /// High fee for transaction: 10%
@@ -6,3 +8,7 @@ pub const HIGH_FEES: u32 = 10u32.checked_mul(BPS).unwrap(); // 100_000
 pub const HIGH_PERFORMANCE_FEE: u32 = 100u32.checked_mul(BPS).unwrap(); // 1_000_000
 /// Low performance fee: 10%
 pub const LOW_PERFORMANCE_FEE: u32 = 10u32.checked_mul(BPS).unwrap(); // 100_000
+
+/// USDC mint address on Solana mainnet
+/// https://solscan.io/token/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+pub const USDC_MINT: Pubkey = pubkey!("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");

@@ -1,7 +1,8 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token, TokenAccount};
 
-use crate::{InvestorEscrow, INVESTOR_ESCROW_SEED};
+use crate::{InvestorEscrow, INVESTOR_ESCROW_SEED, USDC_MINT};
+use crate::error::TokenizedVaultsErrorCode;
 
 #[derive(Accounts)]
 pub struct InitInvestorEscrow<'info> {
@@ -34,6 +35,9 @@ pub struct InitInvestorEscrow<'info> {
     )]
     pub escrow_vault: Account<'info, TokenAccount>,
 
+    #[account(
+        constraint = usdc_mint.key() == USDC_MINT @ TokenizedVaultsErrorCode::InvalidMint
+    )]
     pub usdc_mint: Account<'info, Mint>,
 
     pub system_program: Program<'info, System>,
