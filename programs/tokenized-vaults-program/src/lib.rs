@@ -1,4 +1,5 @@
 #![allow(deprecated, unexpected_cfgs)]
+
 use anchor_lang::prelude::*;
 
 pub mod error;
@@ -48,5 +49,10 @@ pub mod tokenized_vaults_program {
             vault_strategy_type,
             name,
         )
+    }
+
+    #[instruction(discriminator = 3)]
+    pub fn unpause_protocol(ctx: Context<UnpauseProtocol>) -> Result<()> {
+        unpause_protocol::handler(ctx)
     }
 }
