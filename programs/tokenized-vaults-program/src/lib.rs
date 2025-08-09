@@ -49,4 +49,9 @@ pub mod tokenized_vaults_program {
             name,
         )
     }
+
+    #[instruction(discriminator = 3)]
+    pub fn init_investor_escrow(ctx: Context<InitInvestorEscrow>) -> Result<()> {
+        init_investor_escrow_handler(ctx)
+    }
 }

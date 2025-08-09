@@ -31,4 +31,16 @@ pub enum TokenizedVaultsErrorCode {
 
     #[msg("Performance fee cannot be less than 10% (100_000)")]
     PerformanceFeeTooLow,
+
+    #[msg("Investor escrow already initialized")]
+    InvestorEscrowAlreadyInitialized,
+
+    #[msg("Insufficient funds in escrow")]
+    InsufficientFunds,
+
+    #[msg("Math overflow")]
+    MathOverflow,
+
+    #[msg("Invalid mint")]
+    InvalidMint,
 }
