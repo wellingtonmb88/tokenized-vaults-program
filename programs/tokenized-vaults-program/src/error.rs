@@ -7,6 +7,8 @@ pub enum TokenizedVaultsErrorCode {
 
     #[msg("Fee cannot exceed 10% (100_000)")]
     FeeTooHigh,
+    #[msg("Fee cannot be 0 or less (0)")]
+    FeeTooLow,
 
     #[msg("ProtocolConfig already initialized")]
     ProtocolConfigInitialized,
@@ -16,6 +18,9 @@ pub enum TokenizedVaultsErrorCode {
 
     #[msg("Protocol is already paused")]
     ProtocolAlreadyPaused,
+
+    #[msg("Protocol is not paused")]
+    ProtocolNotPaused,
 
     #[msg("VaultStrategyConfig already initialized")]
     VaultStrategyConfigInitialized,

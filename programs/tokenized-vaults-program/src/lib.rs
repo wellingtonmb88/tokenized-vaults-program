@@ -1,4 +1,5 @@
 #![allow(deprecated, unexpected_cfgs)]
+
 use anchor_lang::prelude::*;
 
 pub mod error;
@@ -63,5 +64,9 @@ pub mod tokenized_vaults_program {
     #[instruction(discriminator = 5)]
     pub fn withdraw_from_escrow(ctx: Context<WithdrawFromEscrow>, amount: u64) -> Result<()> {
         withdraw_from_escrow_handler(ctx, amount)
+    }
+
+    pub fn unpause_protocol(ctx: Context<UnpauseProtocol>) -> Result<()> {
+        unpause_protocol::handler(ctx)
     }
 }

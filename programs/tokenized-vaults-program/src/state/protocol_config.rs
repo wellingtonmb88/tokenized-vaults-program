@@ -1,4 +1,4 @@
-use crate::constants::HIGH_FEES;
+use crate::constants::{HIGH_FEES, LOW_FEES};
 use crate::error::TokenizedVaultsErrorCode;
 use crate::ProtocolStatus;
 use anchor_lang::prelude::*;
@@ -32,6 +32,11 @@ impl ProtocolConfig {
             protocol_fees <= HIGH_FEES,
             TokenizedVaultsErrorCode::FeeTooHigh
         );
+        // Check that fee not 0 (ZERO).
+        require!(
+            protocol_fees > LOW_FEES,
+            TokenizedVaultsErrorCode::FeeTooLow
+        );
 
         self.set_inner(admin_authority, protocol_fees, ProtocolStatus::Active, bump)?;
         Ok(())
@@ -59,6 +64,17 @@ impl ProtocolConfig {
         );
 
         self.status = ProtocolStatus::Paused;
+        Ok(())
+    }
+
+    pub fn unpause(&mut self) -> Result<()> {
+        // Check protocol is not already paused.
+        require!(
+            self.status == ProtocolStatus::Paused,
+            TokenizedVaultsErrorCode::ProtocolNotPaused
+        );
+
+        self.status = ProtocolStatus::Active;
         Ok(())
     }
 }
