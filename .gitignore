@@ -10,3 +10,7 @@ yarn-error.log
 *wallet.json
 *.env
 *.env.*
+
+wallet
+*keypair.json
+!tests/fixtures/wallet

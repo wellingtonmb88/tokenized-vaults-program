@@ -49,7 +49,16 @@ pub struct WithdrawFromEscrow<'info> {
 }
 
 impl<'info> WithdrawFromEscrow<'info> {
-    pub fn transfer_from_escrow(&self, amount: u64) -> Result<()> {
+    pub fn withdraw(&mut self, amount: u64) -> Result<()> {
+        self.investor_escrow
+            .process_withdraw(amount, self.escrow_vault.amount)?;
+
+        self.transfer_from_escrow(amount)?;
+
+        Ok(())
+    }
+
+    fn transfer_from_escrow(&self, amount: u64) -> Result<()> {
         let investor_key = self.investor.key();
         let usdc_mint_key = self.usdc_mint.key();
 
@@ -76,11 +85,5 @@ impl<'info> WithdrawFromEscrow<'info> {
 }
 
 pub fn handler(ctx: Context<WithdrawFromEscrow>, amount: u64) -> Result<()> {
-    ctx.accounts
-        .investor_escrow
-        .process_withdraw(amount, ctx.accounts.escrow_vault.amount)?;
-
-    ctx.accounts.transfer_from_escrow(amount)?;
-
-    Ok(())
+    ctx.accounts.withdraw(amount)
 }

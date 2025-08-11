@@ -12,15 +12,15 @@ pub enum VaultStrategyType {
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq, Debug, Default, InitSpace)]
 pub enum ProtocolStatus {
     #[default]
-    Initialized,
+    Unknown,
     Active,
     Paused,
-    Closed,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq, Debug, Default, InitSpace)]
 pub enum VaultStrategyStatus {
     #[default]
+    Unknown,
     Draft,
     Active,
     Paused,

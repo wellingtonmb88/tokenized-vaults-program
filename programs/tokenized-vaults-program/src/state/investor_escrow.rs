@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 
 #[derive(Default, Debug, InitSpace)]
-#[account(discriminator = 3)]
+#[account(discriminator = 5)]
 pub struct InvestorEscrow {
     pub authority: Pubkey,
     pub amount: u64,

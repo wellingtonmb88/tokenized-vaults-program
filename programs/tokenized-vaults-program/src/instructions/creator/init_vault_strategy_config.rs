@@ -4,12 +4,13 @@ use anchor_lang::prelude::*;
 use crate::{error::TokenizedVaultsErrorCode, state::*, ProtocolStatus, VaultStrategyType};
 
 #[derive(Accounts)]
+#[instruction(name: String)]
 pub struct InitVaultStrategyConfig<'info> {
     #[account(mut)]
     pub creator: Signer<'info>,
 
-    #[account(  
-        seeds = [PROTOCOL_CONFIG_SEED.as_bytes()],
+    #[account(
+        seeds = [ProtocolConfig::SEED.as_bytes()],
         bump
     )]
     pub protocol_config: Account<'info, ProtocolConfig>,
@@ -18,7 +19,7 @@ pub struct InitVaultStrategyConfig<'info> {
         init,
         payer = creator,
         space = VaultStrategyConfig::DISCRIMINATOR.len() +VaultStrategyConfig::INIT_SPACE,
-        seeds = [VAULT_STRATEGY_CONFIG_SEED.as_bytes()],
+        seeds = [VaultStrategyConfig::SEED.as_bytes(), creator.key().as_ref(), name.as_ref()],
         bump
     )]
     pub vault_strategy_config: Account<'info, VaultStrategyConfig>,
@@ -29,10 +30,9 @@ pub struct InitVaultStrategyConfig<'info> {
 impl<'info> InitVaultStrategyConfig<'info> {
     pub fn initialize(
         &mut self,
-        creator: Pubkey,
+        name: String,
         performance_fee: u32,
         vault_strategy_type: VaultStrategyType,
-        name: String,
         bump: u8,
     ) -> Result<()> {
         require!(
@@ -41,7 +41,7 @@ impl<'info> InitVaultStrategyConfig<'info> {
         );
 
         self.vault_strategy_config.initialize(
-            creator,
+            self.creator.key(),
             performance_fee,
             vault_strategy_type,
             name,
@@ -53,12 +53,11 @@ impl<'info> InitVaultStrategyConfig<'info> {
 
 pub fn handler(
     ctx: Context<InitVaultStrategyConfig>,
-    creator: Pubkey,
+    name: String,
     performance_fee: u32,
     vault_strategy_type: VaultStrategyType,
-    name: String,
 ) -> Result<()> {
     let bump = ctx.bumps.vault_strategy_config;
     ctx.accounts
-        .initialize(creator, performance_fee, vault_strategy_type, name, bump)
+        .initialize(name, performance_fee, vault_strategy_type, bump)
 }

@@ -1,14 +1,15 @@
 [toolchain]
+anchor_version = "0.31.1"
 package_manager = "yarn"
 
 [features]
 resolution = true
 skip-lint = false
 
-[programs.localnet]
-tokenized_vaults_program = "63JRAaqV5J7RZ2muRqfhBoNyadtLSChKenKZqjvt4gyL"
-
 [programs.devnet]
+tokenized_vaults_program = "J3V7DSboqCBj1ybAaRb7By3xstEHfkdQkFw2TGvZNriU"
+
+[programs.localnet]
 tokenized_vaults_program = "63JRAaqV5J7RZ2muRqfhBoNyadtLSChKenKZqjvt4gyL"
 
 [registry]
