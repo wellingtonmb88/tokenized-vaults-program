@@ -1,7 +1,9 @@
 use anchor_lang::prelude::*;
 
+use crate::DISC_INVESTOR_ESCROW_ACCOUNT;
+
 #[derive(Default, Debug, InitSpace)]
-#[account(discriminator = 5)]
+#[account(discriminator = DISC_INVESTOR_ESCROW_ACCOUNT)]
 pub struct InvestorEscrow {
     pub authority: Pubkey,
     pub amount: u64,

@@ -1,13 +1,13 @@
 use crate::{
     assert_vault_strategy_percentage, assert_vault_strategy_performance_fee,
     assert_vault_strategy_type, error::TokenizedVaultsErrorCode, VaultStrategyStatus,
-    VaultStrategyType, MAX_NUM_STRATEGIES, MAX_PERCENTAGE,
+    VaultStrategyType, DISC_VAULT_STRATEGY_CONFIG_ACCOUNT, MAX_NUM_STRATEGIES, MAX_PERCENTAGE,
 };
 
 use anchor_lang::prelude::*;
 
 #[derive(Default, Debug, InitSpace)]
-#[account(discriminator = 2)]
+#[account(discriminator = DISC_VAULT_STRATEGY_CONFIG_ACCOUNT)]
 pub struct VaultStrategyConfig {
     pub creator: Pubkey,
     pub performance_fee: u32,
