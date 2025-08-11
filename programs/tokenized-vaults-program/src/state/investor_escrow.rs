@@ -4,7 +4,6 @@ use anchor_lang::prelude::*;
 #[account(discriminator = 3)]
 pub struct InvestorEscrow {
     pub authority: Pubkey,
-    pub mint: Pubkey,
     pub amount: u64,
     pub bump: u8,
 }
@@ -13,9 +12,8 @@ impl InvestorEscrow {
     pub const SEED: &'static str = "investor_escrow:";
     pub const VAULT_SEED: &'static str = "escrow_vault";
 
-    pub fn initialize(&mut self, authority: Pubkey, mint: Pubkey, bump: u8) -> Result<()> {
+    pub fn initialize(&mut self, authority: Pubkey, bump: u8) -> Result<()> {
         self.authority = authority;
-        self.mint = mint;
         self.amount = 0;
         self.bump = bump;
 

@@ -46,8 +46,7 @@ pub struct InitInvestorEscrow<'info> {
 
 impl<'info> InitInvestorEscrow<'info> {
     pub fn initialize(&mut self, bump: u8) -> Result<()> {
-        self.investor_escrow
-            .initialize(self.investor.key(), self.usdc_mint.key(), bump)?;
+        self.investor_escrow.initialize(self.investor.key(), bump)?;
 
         Ok(())
     }

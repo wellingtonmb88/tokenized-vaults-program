@@ -18,7 +18,6 @@ pub struct DepositToEscrow<'info> {
         ],
         bump = investor_escrow.bump,
         constraint = investor_escrow.authority == investor.key() @ TokenizedVaultsErrorCode::NotApproved,
-        constraint = investor_escrow.mint == USDC_MINT @ TokenizedVaultsErrorCode::InvalidMint,
     )]
     pub investor_escrow: Account<'info, InvestorEscrow>,
 
