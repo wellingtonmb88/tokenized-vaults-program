@@ -12,8 +12,8 @@ pub struct InitProtocolConfig<'info> {
     #[account(
         init,
         payer = admin_authority,
-        space = ProtocolConfig::DISCRIMINATOR.len() +core::mem::size_of::<ProtocolConfig>(),
-        seeds = [PROTOCOL_CONFIG_SEED.as_bytes()],
+        space = ProtocolConfig::DISCRIMINATOR.len() + ProtocolConfig::INIT_SPACE,
+        seeds = [ProtocolConfig::SEED.as_bytes()],
         bump
     )]
     pub protocol_config: Account<'info, ProtocolConfig>,

@@ -1,22 +1,31 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
+import dotenv from "dotenv";
 import { TokenizedVaultsProgram } from "../target/types/tokenized_vaults_program";
-import { PublicKey, Keypair, LAMPORTS_PER_SOL, sendAndConfirmTransaction, } from "@solana/web3.js";
+import {
+  PublicKey,
+  Keypair,
+  LAMPORTS_PER_SOL,
+  sendAndConfirmTransaction,
+} from "@solana/web3.js";
 import { expect } from "chai";
 
 //auxiliary function to get error logs
 function getErrorLogs(error: any): string[] {
   return error?.logs || [];
 }
+dotenv.config();
 
 describe("tokenized-vaults-program", () => {
-  // Configure the client to use the local cluster.
-  anchor.setProvider(anchor.AnchorProvider.env());
+  // Configure the client to use devnet
+  const provider = anchor.AnchorProvider.env();
+  anchor.setProvider(provider);
+
   // Get the provider and connection objects
-  const provider = anchor.getProvider();
   const connection = provider.connection;
 
-  const program = anchor.workspace.tokenizedVaultsProgram as Program<TokenizedVaultsProgram>;
+  const program = anchor.workspace
+    .tokenizedVaultsProgram as Program<TokenizedVaultsProgram>;
   const programId = program.programId;
 
   // Create admin keypair
@@ -28,24 +37,32 @@ describe("tokenized-vaults-program", () => {
     programId
   );
 
-
   // Airdrop SOL to admin account for pay transactions fees.
   before(async () => {
+    console.log("Running tests on devnet");
+    console.log("Admin address:", admin.publicKey.toString());
+
     const accountInfo = await connection.getAccountInfo(protocolConfigPda);
     if (accountInfo) {
-      console.log("ProtocolConfig account already exists. Consider resetting it.");
+      console.log(
+        "ProtocolConfig account already exists. Consider resetting it."
+      );
     }
 
-    const airdropSignature = await connection.requestAirdrop(
-      admin.publicKey,
-      2 * anchor.web3.LAMPORTS_PER_SOL
-    );
-    await connection.confirmTransaction(airdropSignature);
+    // Check existing balance first
+    const adminBalance = await connection.getBalance(admin.publicKey);
+    console.log("Admin balance:", adminBalance / LAMPORTS_PER_SOL, "SOL");
 
-    const balance = await connection.getBalance(admin.publicKey);
-    console.log(`Admin balance: ${balance / LAMPORTS_PER_SOL} SOL`);
+    // Only airdrop if balance is insufficient
+    if (adminBalance < LAMPORTS_PER_SOL) {
+      console.log("Requesting airdrop for admin...");
+      const airdropSignature = await connection.requestAirdrop(
+        admin.publicKey,
+        200 * anchor.web3.LAMPORTS_PER_SOL
+      );
+      await connection.confirmTransaction(airdropSignature);
+    }
   });
-
 
   describe("Initialization", () => {
     it("Fail if fees exceed the percent set", async () => {
@@ -80,9 +97,8 @@ describe("tokenized-vaults-program", () => {
       }
     });
 
-
     it("Should initializeProtocolConfig", async () => {
-      const protocolFees = 5000; // 5% en ppm 
+      const protocolFees = 5000; // 5% en ppm
 
       // Check if the protocol config PDA already exists
       const accountBefore = await connection.getAccountInfo(protocolConfigPda);
@@ -94,22 +110,24 @@ describe("tokenized-vaults-program", () => {
           adminAuthority: admin.publicKey,
         })
         .transaction();
+
       const txSignature = await sendAndConfirmTransaction(
         provider.connection as any,
-        tx,
+        tx as any,
         [admin]
       );
       // Get state of account protocol config
-      const protocolConfigAccount = await program.account.protocolConfig.fetch(protocolConfigPda);
+      const protocolConfigAccount =
+        await program.account.protocolConfig.fetch(protocolConfigPda);
       // Verify initialized account state
-      expect(protocolConfigAccount.adminAuthority.toBase58()).to.equal(admin.publicKey.toBase58());
+      expect(protocolConfigAccount.adminAuthority.toBase58()).to.equal(
+        admin.publicKey.toBase58()
+      );
       expect(protocolConfigAccount.protocolFees).to.equal(protocolFees);
       //console.log("Status:", protocolConfigAccount.status);
       expect(protocolConfigAccount.status.active).to.not.be.undefined;
       expect(protocolConfigAccount.bump).to.equal(bump);
-
     });
-
 
     it("Should fail if ProtocolConfig is already initialized", async () => {
       // Try to initialize again with same account
@@ -125,8 +143,8 @@ describe("tokenized-vaults-program", () => {
         expect.fail("Expected transaction to fail ProtocolConfigInitialized");
       } catch (error: any) {
         const logs = error.logs || [];
-        expect(logs.some((log: string) => log.includes("already in use"))).to.be.true;
-
+        expect(logs.some((log: string) => log.includes("already in use"))).to.be
+          .true;
       }
     });
   });
@@ -158,15 +176,17 @@ describe("tokenized-vaults-program", () => {
         .rpc({ commitment: "confirmed" });
       //console.log(`Transaction signature: ${txSignature}`);
       // Get state of account protocol config
-      const protocolConfigAccount = await program.account.protocolConfig.fetch(protocolConfigPda);
+      const protocolConfigAccount =
+        await program.account.protocolConfig.fetch(protocolConfigPda);
       // Verify initialized account state
       //console.log("Status:", protocolConfigAccount.status);
       expect(protocolConfigAccount.status.paused).to.not.be.undefined;
-      expect(protocolConfigAccount.adminAuthority.toBase58()).to.equal(admin.publicKey.toBase58());
+      expect(protocolConfigAccount.adminAuthority.toBase58()).to.equal(
+        admin.publicKey.toBase58()
+      );
     });
 
     it("Should Fail if ProtocolConfig Already Paused", async () => {
-
       try {
         await program.methods
           .pauseProtocol()
@@ -184,7 +204,10 @@ describe("tokenized-vaults-program", () => {
 
     it("Should fail if non-admin tries to pause protocol", async () => {
       const nonAdmin = Keypair.generate();
-      await provider.connection.requestAirdrop(nonAdmin.publicKey, LAMPORTS_PER_SOL);
+      await provider.connection.requestAirdrop(
+        nonAdmin.publicKey,
+        LAMPORTS_PER_SOL
+      );
 
       try {
         await program.methods
@@ -202,14 +225,16 @@ describe("tokenized-vaults-program", () => {
 
     it("Should fail if non-admin tries to Unpause protocol", async () => {
       const nonAdmin = Keypair.generate();
-      await provider.connection.requestAirdrop(nonAdmin.publicKey, LAMPORTS_PER_SOL);
+      await provider.connection.requestAirdrop(
+        nonAdmin.publicKey,
+        LAMPORTS_PER_SOL
+      );
 
       try {
         await program.methods
           .unpauseProtocol()
           .accountsPartial({
             adminAuthority: nonAdmin.publicKey,
-
           })
           .signers([nonAdmin])
           .rpc({ commitment: "confirmed" });
@@ -227,7 +252,8 @@ describe("tokenized-vaults-program", () => {
         })
         .signers([admin])
         .rpc({ commitment: "confirmed" });
-      const protocolConfigAccount = await program.account.protocolConfig.fetch(protocolConfigPda);
+      const protocolConfigAccount =
+        await program.account.protocolConfig.fetch(protocolConfigPda);
       expect(protocolConfigAccount.status.active).to.not.be.undefined;
       expect(protocolConfigAccount.bump).to.equal(bump);
     });
@@ -247,8 +273,4 @@ describe("tokenized-vaults-program", () => {
       }
     });
   });
-
-
 });
-
-

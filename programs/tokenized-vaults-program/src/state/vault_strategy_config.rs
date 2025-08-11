@@ -1,11 +1,10 @@
 use crate::{
-    error::TokenizedVaultsErrorCode, VaultStrategyStatus, VaultStrategyType, HIGH_PERFORMANCE_FEE,
-    LOW_PERFORMANCE_FEE,
+    assert_vault_strategy_percentage, assert_vault_strategy_performance_fee,
+    assert_vault_strategy_type, error::TokenizedVaultsErrorCode, VaultStrategyStatus,
+    VaultStrategyType, MAX_NUM_STRATEGIES, MAX_PERCENTAGE,
 };
 
 use anchor_lang::prelude::*;
-
-pub const VAULT_STRATEGY_CONFIG_SEED: &str = "vault_strategy_config:";
 
 #[derive(Default, Debug, InitSpace)]
 #[account(discriminator = 2)]
@@ -15,13 +14,17 @@ pub struct VaultStrategyConfig {
     pub vault_strategy_type: VaultStrategyType,
     pub status: VaultStrategyStatus,
     pub bump: u8,
-    #[max_len(3)]
-    pub strategies: Vec<Pubkey>,
+    #[max_len(MAX_NUM_STRATEGIES)]
+    pub strategies: Vec<Pubkey>, // [0, 1, 2]
+    #[max_len(MAX_NUM_STRATEGIES)]
+    pub percentages: Vec<u32>, // [300_000, 500_000, 200_000]
     #[max_len(32)]
     pub name: String,
 }
 
 impl VaultStrategyConfig {
+    pub const SEED: &str = "vault_strategy_config:";
+
     pub fn initialize(
         &mut self,
         creator: Pubkey,
@@ -32,7 +35,7 @@ impl VaultStrategyConfig {
     ) -> Result<()> {
         // Check vault strategy config is not already initialized.
         require!(
-            self.creator == Pubkey::default(),
+            self.status == VaultStrategyStatus::Unknown,
             TokenizedVaultsErrorCode::VaultStrategyConfigInitialized
         );
 
@@ -69,35 +72,23 @@ impl VaultStrategyConfig {
         self.bump = bump;
         Ok(())
     }
-}
 
-pub fn assert_vault_strategy_name(name: &str) -> Result<()> {
-    require!(
-        !name.is_empty(),
-        TokenizedVaultsErrorCode::InvalidVaultStrategyName
-    );
-    Ok(())
-}
+    pub fn add_strategy(&mut self, strategy: Pubkey, percentage: u32) -> Result<()> {
+        require!(
+            self.strategies.len() < MAX_NUM_STRATEGIES as usize,
+            TokenizedVaultsErrorCode::VaultStrategyConfigMaxStrategiesReached
+        );
 
-pub fn assert_vault_strategy_performance_fee(performance_fee: u32) -> Result<()> {
-    require!(
-        performance_fee <= HIGH_PERFORMANCE_FEE,
-        TokenizedVaultsErrorCode::PerformanceFeeTooHigh
-    );
-    require!(
-        performance_fee >= LOW_PERFORMANCE_FEE,
-        TokenizedVaultsErrorCode::PerformanceFeeTooLow
-    );
-    Ok(())
-}
+        let total_percentage: u32 = self.percentages.iter().sum();
+        require!(
+            total_percentage + percentage <= MAX_PERCENTAGE,
+            TokenizedVaultsErrorCode::InvalidVaultStrategyPercentage
+        );
 
-pub fn assert_vault_strategy_type(vault_strategy_type: &VaultStrategyType) -> Result<()> {
-    match vault_strategy_type {
-        VaultStrategyType::Unknown => {
-            Err(TokenizedVaultsErrorCode::InvalidVaultStrategyType.into())
-        }
-        VaultStrategyType::Conservative => Ok(()),
-        VaultStrategyType::Balanced => Ok(()),
-        VaultStrategyType::Aggressive => Ok(()),
+        assert_vault_strategy_percentage(percentage)?;
+
+        self.strategies.push(strategy);
+        self.percentages.push(percentage);
+        Ok(())
     }
 }

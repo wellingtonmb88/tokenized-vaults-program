@@ -11,7 +11,7 @@ pub struct PauseProtocol<'info> {
     #[account(
         mut,
         has_one = admin_authority,
-        seeds = [PROTOCOL_CONFIG_SEED.as_bytes()],
+        seeds = [ProtocolConfig::SEED.as_bytes()],
         bump = protocol_config.bump
     )]
     pub protocol_config: Account<'info, ProtocolConfig>,

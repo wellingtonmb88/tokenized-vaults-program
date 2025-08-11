@@ -48,7 +48,16 @@ pub struct DepositToEscrow<'info> {
 }
 
 impl<'info> DepositToEscrow<'info> {
-    pub fn transfer_to_escrow(&self, amount: u64) -> Result<()> {
+    pub fn deposit(&mut self, amount: u64) -> Result<()> {
+        self.investor_escrow
+            .process_deposit(amount, self.investor_token_account.amount)?;
+
+        self.transfer_to_escrow(amount)?;
+
+        Ok(())
+    }
+
+    fn transfer_to_escrow(&self, amount: u64) -> Result<()> {
         let cpi_accounts = Transfer {
             from: self.investor_token_account.to_account_info(),
             to: self.escrow_vault.to_account_info(),
@@ -64,11 +73,5 @@ impl<'info> DepositToEscrow<'info> {
 }
 
 pub fn handler(ctx: Context<DepositToEscrow>, amount: u64) -> Result<()> {
-    ctx.accounts
-        .investor_escrow
-        .process_deposit(amount, ctx.accounts.investor_token_account.amount)?;
-
-    ctx.accounts.transfer_to_escrow(amount)?;
-
-    Ok(())
+    ctx.accounts.deposit(amount)
 }

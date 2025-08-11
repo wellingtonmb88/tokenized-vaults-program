@@ -3,8 +3,6 @@ use crate::error::TokenizedVaultsErrorCode;
 use crate::ProtocolStatus;
 use anchor_lang::prelude::*;
 
-pub const PROTOCOL_CONFIG_SEED: &str = "protocol_config:";
-
 #[derive(Default, Debug, InitSpace)]
 #[account(discriminator = 1)]
 pub struct ProtocolConfig {
@@ -15,6 +13,8 @@ pub struct ProtocolConfig {
 }
 
 impl ProtocolConfig {
+    pub const SEED: &str = "protocol_config:";
+
     pub fn initialize(
         &mut self,
         admin_authority: Pubkey,
@@ -23,7 +23,7 @@ impl ProtocolConfig {
     ) -> Result<()> {
         // Check protocol config is not already initialized.
         require!(
-            self.admin_authority == Pubkey::default(),
+            self.status == ProtocolStatus::Unknown,
             TokenizedVaultsErrorCode::ProtocolConfigInitialized
         );
 
