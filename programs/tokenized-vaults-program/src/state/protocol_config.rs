@@ -1,10 +1,10 @@
 use crate::constants::{HIGH_FEES, LOW_FEES};
 use crate::error::TokenizedVaultsErrorCode;
-use crate::ProtocolStatus;
+use crate::{ProtocolStatus, DISC_PROTOCOL_CONFIG_ACCOUNT};
 use anchor_lang::prelude::*;
 
 #[derive(Default, Debug, InitSpace)]
-#[account(discriminator = 1)]
+#[account(discriminator = DISC_PROTOCOL_CONFIG_ACCOUNT)]
 pub struct ProtocolConfig {
     pub admin_authority: Pubkey,
     pub protocol_fees: u32,

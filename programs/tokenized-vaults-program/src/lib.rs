@@ -21,7 +21,7 @@ declare_id!("J3V7DSboqCBj1ybAaRb7By3xstEHfkdQkFw2TGvZNriU");
 pub mod tokenized_vaults_program {
     use super::*;
 
-    #[instruction(discriminator = 0)]
+    #[instruction(discriminator = DISC_INIT_PROTOCOL_CONFIG_IX)]
     pub fn init_protocol_config(
         ctx: Context<InitProtocolConfig>,
         protocol_fees: u32,
@@ -34,7 +34,12 @@ pub mod tokenized_vaults_program {
         pause_protocol::handler(ctx)
     }
 
-    #[instruction(discriminator = 2)]
+    #[instruction(discriminator = DISC_UNPAUSE_PROTOCOL_IX)]
+    pub fn unpause_protocol(ctx: Context<UnpauseProtocol>) -> Result<()> {
+        unpause_protocol::handler(ctx)
+    }
+
+    #[instruction(discriminator = DISC_INIT_VAULT_STRATEGY_CONFIG_IX)]
     pub fn init_vault_strategy_config(
         ctx: Context<InitVaultStrategyConfig>,
         name: String,
@@ -44,7 +49,7 @@ pub mod tokenized_vaults_program {
         init_vault_strategy_config::handler(ctx, name, performance_fee, vault_strategy_type)
     }
 
-    #[instruction(discriminator = 3)]
+    #[instruction(discriminator = DISC_CREATE_RAYDIUM_VAULT_STRATEGY_IX)]
     pub fn create_raydium_vault_strategy<'a, 'b, 'c, 'info>(
         ctx: Context<'a, 'b, 'c, 'info, CreateRaydiumVaultStrategy<'info>>,
         vault_strategy_name: String,
@@ -78,23 +83,19 @@ pub mod tokenized_vaults_program {
         )
     }
 
-    #[instruction(discriminator = 4)]
+    #[instruction(discriminator = DISC_INIT_INVESTOR_ESCROW_IX)]
     pub fn init_investor_escrow(ctx: Context<InitInvestorEscrow>) -> Result<()> {
         init_investor_escrow::handler(ctx)
     }
 
-    #[instruction(discriminator = 5)]
+    #[instruction(discriminator = DISC_DEPOSIT_TO_ESCROW_IX)]
     pub fn deposit_to_escrow(ctx: Context<DepositToEscrow>, amount: u64) -> Result<()> {
         deposit_to_escrow::handler(ctx, amount)
     }
 
-    #[instruction(discriminator = 6)]
+    #[instruction(discriminator = DISC_WITHDRAW_FROM_ESCROW_IX)]
     pub fn withdraw_from_escrow(ctx: Context<WithdrawFromEscrow>, amount: u64) -> Result<()> {
         withdraw_from_escrow::handler(ctx, amount)
     }
 
-    #[instruction(discriminator = 7)]
-    pub fn unpause_protocol(ctx: Context<UnpauseProtocol>) -> Result<()> {
-        unpause_protocol::handler(ctx)
-    }
 }

@@ -1,9 +1,9 @@
-use crate::{assert_vault_strategy_percentage, error::TokenizedVaultsErrorCode};
+use crate::{assert_vault_strategy_percentage, error::TokenizedVaultsErrorCode, DISC_VAULT_STRATEGY_ACCOUNT};
 
 use anchor_lang::prelude::*;
 
 #[derive(Default, Debug, InitSpace)]
-#[account(discriminator = 3)]
+#[account(discriminator = DISC_VAULT_STRATEGY_ACCOUNT)]
 pub struct VaultStrategy {
     pub creator: Pubkey,
     pub vault_strategy_config_key: Pubkey,

@@ -1,9 +1,9 @@
 use anchor_lang::prelude::*;
 
-use crate::error::TokenizedVaultsErrorCode;
+use crate::{error::TokenizedVaultsErrorCode, DISC_INVESTOR_STR_POS_ACCOUNT};
 
 #[derive(Default, Debug, InitSpace)]
-#[account(discriminator = 4)]
+#[account(discriminator = DISC_INVESTOR_STR_POS_ACCOUNT)]
 pub struct InvestorStrategyPosition {
     pub authority: Pubkey,
     pub vault_strategy_key: Pubkey,
