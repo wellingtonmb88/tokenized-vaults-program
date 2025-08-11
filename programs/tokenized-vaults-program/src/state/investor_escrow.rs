@@ -18,6 +18,7 @@ impl InvestorEscrow {
         self.mint = mint;
         self.amount = 0;
         self.bump = bump;
+
         Ok(())
     }
 

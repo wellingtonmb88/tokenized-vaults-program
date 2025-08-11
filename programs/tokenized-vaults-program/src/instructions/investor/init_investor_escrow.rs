@@ -1,8 +1,8 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token, TokenAccount};
 
-use crate::{InvestorEscrow, USDC_MINT};
 use crate::error::TokenizedVaultsErrorCode;
+use crate::{InvestorEscrow, USDC_MINT};
 
 #[derive(Accounts)]
 pub struct InitInvestorEscrow<'info> {
@@ -44,15 +44,16 @@ pub struct InitInvestorEscrow<'info> {
     pub token_program: Program<'info, Token>,
 }
 
+impl<'info> InitInvestorEscrow<'info> {
+    pub fn initialize(&mut self, bump: u8) -> Result<()> {
+        self.investor_escrow
+            .initialize(self.investor.key(), self.usdc_mint.key(), bump)?;
+
+        Ok(())
+    }
+}
+
 pub fn handler(ctx: Context<InitInvestorEscrow>) -> Result<()> {
-    let investor_escrow = &mut ctx.accounts.investor_escrow;
     let bump = ctx.bumps.investor_escrow;
-
-    investor_escrow.initialize(
-        ctx.accounts.investor.key(),
-        ctx.accounts.usdc_mint.key(),
-        bump,
-    )?;
-
-    Ok(())
+    ctx.accounts.initialize(bump)
 }
