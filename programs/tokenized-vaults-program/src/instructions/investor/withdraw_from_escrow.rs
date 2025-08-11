@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Mint, Token, TokenAccount, Transfer};
 
 use crate::error::TokenizedVaultsErrorCode;
-use crate::{InvestorEscrow, INVESTOR_ESCROW_SEED, USDC_MINT};
+use crate::{InvestorEscrow, USDC_MINT};
 
 #[derive(Accounts)]
 pub struct WithdrawFromEscrow<'info> {
@@ -12,7 +12,7 @@ pub struct WithdrawFromEscrow<'info> {
     #[account(
         mut,
         seeds = [
-            INVESTOR_ESCROW_SEED.as_bytes(),
+            InvestorEscrow::SEED.as_bytes(),
             investor.key().as_ref(),
             usdc_mint.key().as_ref(),
         ],
@@ -25,7 +25,7 @@ pub struct WithdrawFromEscrow<'info> {
     #[account(
         mut,
         seeds = [
-            b"escrow_vault",
+            InvestorEscrow::VAULT_SEED.as_bytes(),
             investor_escrow.key().as_ref(),
         ],
         bump,
@@ -55,7 +55,7 @@ impl<'info> WithdrawFromEscrow<'info> {
         let usdc_mint_key = self.usdc_mint.key();
         
         let seeds = &[
-            INVESTOR_ESCROW_SEED.as_bytes(),
+            InvestorEscrow::SEED.as_bytes(),
             investor_key.as_ref(),
             usdc_mint_key.as_ref(),
             &[self.investor_escrow.bump],
@@ -76,7 +76,7 @@ impl<'info> WithdrawFromEscrow<'info> {
     }
 }
 
-pub fn withdraw_from_escrow_handler(ctx: Context<WithdrawFromEscrow>, amount: u64) -> Result<()> {
+pub fn handler(ctx: Context<WithdrawFromEscrow>, amount: u64) -> Result<()> {
     require!(amount > 0, TokenizedVaultsErrorCode::InvalidAmount);
     
     // Check if escrow has sufficient balance

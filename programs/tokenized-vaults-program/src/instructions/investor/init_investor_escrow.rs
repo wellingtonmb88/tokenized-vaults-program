@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token, TokenAccount};
 
-use crate::{InvestorEscrow, INVESTOR_ESCROW_SEED, USDC_MINT};
+use crate::{InvestorEscrow, USDC_MINT};
 use crate::error::TokenizedVaultsErrorCode;
 
 #[derive(Accounts)]
@@ -12,9 +12,9 @@ pub struct InitInvestorEscrow<'info> {
     #[account(
         init,
         payer = investor,
-        space = 8 + InvestorEscrow::INIT_SPACE,
+        space = InvestorEscrow::DISCRIMINATOR.len() + InvestorEscrow::INIT_SPACE,
         seeds = [
-            INVESTOR_ESCROW_SEED.as_bytes(),
+            InvestorEscrow::SEED.as_bytes(),
             investor.key().as_ref(),
             usdc_mint.key().as_ref(),
         ],
@@ -28,7 +28,7 @@ pub struct InitInvestorEscrow<'info> {
         token::mint = usdc_mint,
         token::authority = investor_escrow,
         seeds = [
-            b"escrow_vault",
+            InvestorEscrow::VAULT_SEED.as_bytes(),
             investor_escrow.key().as_ref(),
         ],
         bump
@@ -44,7 +44,7 @@ pub struct InitInvestorEscrow<'info> {
     pub token_program: Program<'info, Token>,
 }
 
-pub fn init_investor_escrow_handler(ctx: Context<InitInvestorEscrow>) -> Result<()> {
+pub fn handler(ctx: Context<InitInvestorEscrow>) -> Result<()> {
     let investor_escrow = &mut ctx.accounts.investor_escrow;
     let bump = ctx.bumps.investor_escrow;
 

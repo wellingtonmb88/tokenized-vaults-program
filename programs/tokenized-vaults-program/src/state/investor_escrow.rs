@@ -1,7 +1,5 @@
 use anchor_lang::prelude::*;
 
-pub const INVESTOR_ESCROW_SEED: &str = "investor_escrow:";
-
 #[derive(Default, Debug, InitSpace)]
 #[account(discriminator = 3)]
 pub struct InvestorEscrow {
@@ -12,6 +10,9 @@ pub struct InvestorEscrow {
 }
 
 impl InvestorEscrow {
+    pub const SEED: &'static str = "investor_escrow:";
+    pub const VAULT_SEED: &'static str = "escrow_vault";
+    
     pub fn initialize(
         &mut self,
         authority: Pubkey,

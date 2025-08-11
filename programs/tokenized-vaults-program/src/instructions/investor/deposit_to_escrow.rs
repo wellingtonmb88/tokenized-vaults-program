@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Mint, Token, TokenAccount, Transfer};
 
 use crate::error::TokenizedVaultsErrorCode;
-use crate::{InvestorEscrow, INVESTOR_ESCROW_SEED, USDC_MINT};
+use crate::{InvestorEscrow, USDC_MINT};
 
 #[derive(Accounts)]
 pub struct DepositToEscrow<'info> {
@@ -12,7 +12,7 @@ pub struct DepositToEscrow<'info> {
     #[account(
         mut,
         seeds = [
-            INVESTOR_ESCROW_SEED.as_bytes(),
+            InvestorEscrow::SEED.as_bytes(),
             investor.key().as_ref(),
             usdc_mint.key().as_ref(),
         ],
@@ -25,7 +25,7 @@ pub struct DepositToEscrow<'info> {
     #[account(
         mut,
         seeds = [
-            b"escrow_vault",
+            InvestorEscrow::VAULT_SEED.as_bytes(),
             investor_escrow.key().as_ref(),
         ],
         bump,
@@ -64,7 +64,7 @@ impl<'info> DepositToEscrow<'info> {
     }
 }
 
-pub fn deposit_to_escrow_handler(ctx: Context<DepositToEscrow>, amount: u64) -> Result<()> {
+pub fn handler(ctx: Context<DepositToEscrow>, amount: u64) -> Result<()> {
     require!(amount > 0, TokenizedVaultsErrorCode::InvalidAmount);
 
     require!(

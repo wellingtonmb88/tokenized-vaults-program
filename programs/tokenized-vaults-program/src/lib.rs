@@ -53,17 +53,17 @@ pub mod tokenized_vaults_program {
 
     #[instruction(discriminator = 3)]
     pub fn init_investor_escrow(ctx: Context<InitInvestorEscrow>) -> Result<()> {
-        init_investor_escrow_handler(ctx)
+        init_investor_escrow::handler(ctx)
     }
 
     #[instruction(discriminator = 4)]
     pub fn deposit_to_escrow(ctx: Context<DepositToEscrow>, amount: u64) -> Result<()> {
-        deposit_to_escrow_handler(ctx, amount)
+        deposit_to_escrow::handler(ctx, amount)
     }
 
     #[instruction(discriminator = 5)]
     pub fn withdraw_from_escrow(ctx: Context<WithdrawFromEscrow>, amount: u64) -> Result<()> {
-        withdraw_from_escrow_handler(ctx, amount)
+        withdraw_from_escrow::handler(ctx, amount)
     }
 
     pub fn unpause_protocol(ctx: Context<UnpauseProtocol>) -> Result<()> {
