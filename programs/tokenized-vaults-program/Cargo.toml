@@ -10,13 +10,15 @@ name = "tokenized_vaults_program"
 
 [features]
 default = []
+devnet = []
 cpi = ["no-entrypoint"]
 no-entrypoint = []
 no-idl = []
 no-log-ix-name = []
-idl-build = ["anchor-lang/idl-build"]
+idl-build = ["anchor-lang/idl-build", "anchor-spl/idl-build"]
 
 
 [dependencies]
 anchor-lang = "0.31.1"
+anchor-spl = "0.31.1"
 

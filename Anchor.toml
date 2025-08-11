@@ -8,6 +8,9 @@ skip-lint = false
 [programs.localnet]
 tokenized_vaults_program = "63JRAaqV5J7RZ2muRqfhBoNyadtLSChKenKZqjvt4gyL"
 
+[programs.devnet]
+tokenized_vaults_program = "63JRAaqV5J7RZ2muRqfhBoNyadtLSChKenKZqjvt4gyL"
+
 [registry]
 url = "https://api.apr.dev"
 
