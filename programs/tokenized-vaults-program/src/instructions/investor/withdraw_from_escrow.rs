@@ -45,7 +45,7 @@ pub struct WithdrawFromEscrow<'info> {
         constraint = usdc_mint.key() == USDC_MINT @ TokenizedVaultsErrorCode::InvalidMint
     )]
     pub usdc_mint: Account<'info, Mint>,
-    
+
     pub token_program: Program<'info, Token>,
 }
 
@@ -53,7 +53,7 @@ impl<'info> WithdrawFromEscrow<'info> {
     pub fn transfer_from_escrow(&self, amount: u64) -> Result<()> {
         let investor_key = self.investor.key();
         let usdc_mint_key = self.usdc_mint.key();
-        
+
         let seeds = &[
             InvestorEscrow::SEED.as_bytes(),
             investor_key.as_ref(),
@@ -61,44 +61,27 @@ impl<'info> WithdrawFromEscrow<'info> {
             &[self.investor_escrow.bump],
         ];
         let signer_seeds = &[&seeds[..]];
-        
+
         let cpi_accounts = Transfer {
             from: self.escrow_vault.to_account_info(),
             to: self.investor_token_account.to_account_info(),
             authority: self.investor_escrow.to_account_info(),
         };
-        
+
         let cpi_program = self.token_program.to_account_info();
         let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
-        
+
         token::transfer(cpi_ctx, amount)?;
         Ok(())
     }
 }
 
 pub fn handler(ctx: Context<WithdrawFromEscrow>, amount: u64) -> Result<()> {
-    require!(amount > 0, TokenizedVaultsErrorCode::InvalidAmount);
-    
-    // Check if escrow has sufficient balance
-    require!(
-        ctx.accounts.investor_escrow.amount >= amount,
-        TokenizedVaultsErrorCode::InsufficientFunds
-    );
-    
-    // Also verify the vault has sufficient balance (should match escrow tracking)
-    require!(
-        ctx.accounts.escrow_vault.amount >= amount,
-        TokenizedVaultsErrorCode::InsufficientFunds
-    );
-    
-    // Update escrow account balance first (checks for underflow)
-    ctx.accounts.investor_escrow.withdraw(amount)?;
-    
-    // Transfer USDC from escrow vault to investor
+    ctx.accounts
+        .investor_escrow
+        .process_withdraw(amount, ctx.accounts.escrow_vault.amount)?;
+
     ctx.accounts.transfer_from_escrow(amount)?;
-    
-    msg!("Withdrew {} USDC from escrow", amount);
-    msg!("New escrow balance: {}", ctx.accounts.investor_escrow.amount);
-    
+
     Ok(())
 }

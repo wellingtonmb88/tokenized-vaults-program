@@ -12,13 +12,8 @@ pub struct InvestorEscrow {
 impl InvestorEscrow {
     pub const SEED: &'static str = "investor_escrow:";
     pub const VAULT_SEED: &'static str = "escrow_vault";
-    
-    pub fn initialize(
-        &mut self,
-        authority: Pubkey,
-        mint: Pubkey,
-        bump: u8,
-    ) -> Result<()> {
+
+    pub fn initialize(&mut self, authority: Pubkey, mint: Pubkey, bump: u8) -> Result<()> {
         self.authority = authority;
         self.mint = mint;
         self.amount = 0;
@@ -27,8 +22,26 @@ impl InvestorEscrow {
     }
 
     pub fn deposit(&mut self, amount: u64) -> Result<()> {
-        self.amount = self.amount.checked_add(amount)
+        self.amount = self
+            .amount
+            .checked_add(amount)
             .ok_or(crate::error::TokenizedVaultsErrorCode::MathOverflow)?;
+        Ok(())
+    }
+
+    pub fn process_deposit(&mut self, amount: u64, investor_balance: u64) -> Result<()> {
+        require!(
+            amount > 0,
+            crate::error::TokenizedVaultsErrorCode::InvalidAmount
+        );
+
+        require!(
+            investor_balance >= amount,
+            crate::error::TokenizedVaultsErrorCode::InsufficientFunds
+        );
+
+        self.deposit(amount)?;
+
         Ok(())
     }
 
@@ -37,8 +50,31 @@ impl InvestorEscrow {
             self.amount >= amount,
             crate::error::TokenizedVaultsErrorCode::InsufficientFunds
         );
-        self.amount = self.amount.checked_sub(amount)
+        self.amount = self
+            .amount
+            .checked_sub(amount)
             .ok_or(crate::error::TokenizedVaultsErrorCode::MathOverflow)?;
+        Ok(())
+    }
+
+    pub fn process_withdraw(&mut self, amount: u64, vault_balance: u64) -> Result<()> {
+        require!(
+            amount > 0,
+            crate::error::TokenizedVaultsErrorCode::InvalidAmount
+        );
+
+        require!(
+            self.amount >= amount,
+            crate::error::TokenizedVaultsErrorCode::InsufficientFunds
+        );
+
+        require!(
+            vault_balance >= amount,
+            crate::error::TokenizedVaultsErrorCode::InsufficientFunds
+        );
+
+        self.withdraw(amount)?;
+
         Ok(())
     }
 }

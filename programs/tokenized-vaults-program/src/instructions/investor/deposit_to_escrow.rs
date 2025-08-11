@@ -65,17 +65,11 @@ impl<'info> DepositToEscrow<'info> {
 }
 
 pub fn handler(ctx: Context<DepositToEscrow>, amount: u64) -> Result<()> {
-    require!(amount > 0, TokenizedVaultsErrorCode::InvalidAmount);
-
-    require!(
-        ctx.accounts.investor_token_account.amount >= amount,
-        TokenizedVaultsErrorCode::InsufficientFunds
-    );
+    ctx.accounts
+        .investor_escrow
+        .process_deposit(amount, ctx.accounts.investor_token_account.amount)?;
 
     ctx.accounts.transfer_to_escrow(amount)?;
-
-    let investor_escrow = &mut ctx.accounts.investor_escrow;
-    investor_escrow.deposit(amount)?;
 
     Ok(())
 }
