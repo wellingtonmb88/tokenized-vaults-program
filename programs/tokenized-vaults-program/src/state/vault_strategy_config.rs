@@ -91,4 +91,24 @@ impl VaultStrategyConfig {
         self.percentages.push(percentage);
         Ok(())
     }
+
+    pub fn pause_vault(&mut self) -> Result<()> {
+        require!(
+            self.status == VaultStrategyStatus::Active,
+            TokenizedVaultsErrorCode::VaultStrategyConfigNotActive
+        );
+
+        self.status = VaultStrategyStatus::Paused;
+        Ok(())
+    }
+
+    pub fn unpause_vault(&mut self) -> Result<()> {
+        require!(
+            self.status == VaultStrategyStatus::Paused,
+            TokenizedVaultsErrorCode::VaultStrategyConfigNotPaused
+        );
+
+        self.status = VaultStrategyStatus::Active;
+        Ok(())
+    }
 }
