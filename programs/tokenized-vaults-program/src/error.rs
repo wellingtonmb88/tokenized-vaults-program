@@ -34,6 +34,9 @@ pub enum TokenizedVaultsErrorCode {
     #[msg("VaultStrategyConfig is not in draft status")]
     VaultStrategyConfigNotDraft,
 
+    #[msg("VaultStrategyConfig is not in paused status")]
+    VaultStrategyConfigNotPaused,
+
     #[msg("VaultStrategyConfig max strategies reached")]
     VaultStrategyConfigMaxStrategiesReached,
 
