@@ -16,3 +16,7 @@ pub struct InvestReserveVault {
     pub reserved_amount: u64,
     pub swap_to_ratio_vaults: [SwapToRatioVault; 3],
 }
+
+impl InvestReserveVault {
+    pub const SEED: &'static str = "invest_reserve_vault:";
+}

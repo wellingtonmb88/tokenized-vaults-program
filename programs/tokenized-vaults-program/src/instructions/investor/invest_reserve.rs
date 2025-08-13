@@ -62,7 +62,7 @@ pub struct InvestReserve<'info> {
         payer = investor,
         space = InvestReserveVault::DISCRIMINATOR.len() + InvestReserveVault::INIT_SPACE,
         seeds = [
-            b"invest_reserve_vault",
+            InvestReserveVault::SEED.as_bytes(),
             investor.key().as_ref(),
             vault_strategy_config.key().as_ref(),
         ],
