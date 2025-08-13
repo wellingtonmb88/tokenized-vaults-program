@@ -29,7 +29,7 @@ pub mod tokenized_vaults_program {
         init_protocol_config::handler(ctx, protocol_fees)
     }
 
-    #[instruction(discriminator = 1)]
+    #[instruction(discriminator = DISC_PAUSE_PROTOCOL_IX)]
     pub fn pause_protocol(ctx: Context<PauseProtocol>) -> Result<()> {
         pause_protocol::handler(ctx)
     }
@@ -47,6 +47,16 @@ pub mod tokenized_vaults_program {
         vault_strategy_type: VaultStrategyType,
     ) -> Result<()> {
         init_vault_strategy_config::handler(ctx, name, performance_fee, vault_strategy_type)
+    }
+
+    #[instruction(discriminator = DISC_PAUSE_VAULT_IX)]
+    pub fn pause_vault(ctx: Context<PauseVault>) -> Result<()> {
+        pause_vault::handler(ctx)
+    }
+
+    #[instruction(discriminator = DISC_UNPAUSE_VAULT_IX)]
+    pub fn unpause_vault(ctx: Context<UnpauseVault>) -> Result<()> {
+        unpause_vault::handler(ctx)
     }
 
     #[instruction(discriminator = DISC_CREATE_RAYDIUM_VAULT_STRATEGY_IX)]
@@ -102,5 +112,4 @@ pub mod tokenized_vaults_program {
     pub fn invest_reserve(ctx: Context<InvestReserve>, amount: u64) -> Result<()> {
         invest_reserve::handler(ctx, amount)
     }
-
 }
