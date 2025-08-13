@@ -18,7 +18,7 @@ pub struct InvestorStrategyPosition {
 
 impl InvestorStrategyPosition {
     /// The seed used to derive the investor strategy position PDA
-    pub const SEED: &str = "inv_strtg_pos:";
+    pub const SEED: &'static str = "inv_strtg_pos:";
     const VIRTUAL_ASSETS: u64 = 1; // 1 micro USDC
     const VIRTUAL_SHARES: u64 = 1; // 1 micro share
 
@@ -52,6 +52,13 @@ impl InvestorStrategyPosition {
             self.assets > 0,
             TokenizedVaultsErrorCode::AssetsCalculatedToZero
         );
+
+        emit!(InvestorStrategyPositionEvent {
+            authority: self.authority,
+            vault_strategy_key: self.vault_strategy_key,
+            shares: total_vault_shares,
+            assets: total_vault_assets,
+        });
         Ok(())
     }
 
@@ -119,4 +126,13 @@ impl InvestorStrategyPosition {
     //         Ok(assets as u64)
     //     }
     // }
+}
+
+#[event]
+#[derive(Debug)]
+pub struct InvestorStrategyPositionEvent {
+    pub authority: Pubkey,
+    pub vault_strategy_key: Pubkey,
+    pub shares: u64,
+    pub assets: u64,
 }

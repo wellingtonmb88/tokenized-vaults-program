@@ -1,6 +1,8 @@
 use anchor_lang::prelude::*;
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq, Debug, Default, InitSpace)]
+#[derive(
+    AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq, Debug, Default, InitSpace,
+)]
 pub enum VaultStrategyType {
     #[default]
     Unknown,
@@ -9,7 +11,9 @@ pub enum VaultStrategyType {
     Aggressive,
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq, Debug, Default, InitSpace)]
+#[derive(
+    AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq, Debug, Default, InitSpace,
+)]
 pub enum ProtocolStatus {
     #[default]
     Unknown,
@@ -17,7 +21,9 @@ pub enum ProtocolStatus {
     Paused,
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq, Debug, Default, InitSpace)]
+#[derive(
+    AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq, Debug, Default, InitSpace,
+)]
 pub enum VaultStrategyStatus {
     #[default]
     Unknown,

@@ -1,4 +1,6 @@
-use crate::{assert_vault_strategy_percentage, error::TokenizedVaultsErrorCode, DISC_VAULT_STRATEGY_ACCOUNT};
+use crate::{
+    assert_vault_strategy_percentage, error::TokenizedVaultsErrorCode, DISC_VAULT_STRATEGY_ACCOUNT,
+};
 
 use anchor_lang::prelude::*;
 
@@ -19,7 +21,7 @@ pub struct VaultStrategy {
 
 impl VaultStrategy {
     /// The seed used to derive the vault strategy PDA
-    pub const SEED: &str = "vlt_sttg:";
+    pub const SEED: &'static str = "vlt_sttg:";
 
     pub fn initialize(
         &mut self,
@@ -47,6 +49,19 @@ impl VaultStrategy {
         self.percentage = percentage;
         self.strategy_id = strategy_id;
         self.bump = bump;
+
+        emit!(VaultStrategyInitializeEvent {
+            creator,
+            vault_strategy_config_key,
+            dex_nft_mint,
+            mint_0,
+            mint_1,
+            assets,
+            shares,
+            percentage,
+            strategy_id,
+        });
+
         Ok(())
     }
 
@@ -56,6 +71,13 @@ impl VaultStrategy {
             self.total_assets > 0,
             TokenizedVaultsErrorCode::AssetsCalculatedToZero
         );
+
+        emit!(VaultStrategyUpdateAssetsEvent {
+            creator: self.creator,
+            vault_strategy_config_key: self.vault_strategy_config_key,
+            assets: self.total_assets,
+            strategy_id: self.strategy_id
+        });
         Ok(())
     }
 
@@ -65,6 +87,12 @@ impl VaultStrategy {
             self.total_shares > 0,
             TokenizedVaultsErrorCode::SharesCalculatedToZero
         );
+        emit!(VaultStrategyUpdateShareEvent {
+            creator: self.creator,
+            vault_strategy_config_key: self.vault_strategy_config_key,
+            shares: self.total_shares,
+            strategy_id: self.strategy_id
+        });
         Ok(())
     }
 
@@ -83,4 +111,35 @@ impl VaultStrategy {
             std::slice::from_raw_parts(signer_seeds.as_ptr() as *const &[&[u8]], signer_seeds.len())
         }
     }
+}
+
+#[event]
+#[derive(Debug)]
+pub struct VaultStrategyInitializeEvent {
+    creator: Pubkey,
+    vault_strategy_config_key: Pubkey,
+    dex_nft_mint: Pubkey,
+    mint_0: Pubkey,
+    mint_1: Pubkey,
+    assets: u64,
+    shares: u64,
+    percentage: u32,
+    strategy_id: u8,
+}
+#[event]
+#[derive(Debug)]
+pub struct VaultStrategyUpdateAssetsEvent {
+    creator: Pubkey,
+    vault_strategy_config_key: Pubkey,
+    assets: u64,
+    strategy_id: u8,
+}
+
+#[event]
+#[derive(Debug)]
+pub struct VaultStrategyUpdateShareEvent {
+    creator: Pubkey,
+    vault_strategy_config_key: Pubkey,
+    shares: u64,
+    strategy_id: u8,
 }

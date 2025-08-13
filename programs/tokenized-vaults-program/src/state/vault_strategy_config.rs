@@ -23,7 +23,7 @@ pub struct VaultStrategyConfig {
 }
 
 impl VaultStrategyConfig {
-    pub const SEED: &str = "vault_strategy_config:";
+    pub const SEED: &'static str = "vault_strategy_config:";
 
     pub fn initialize(
         &mut self,
@@ -51,6 +51,14 @@ impl VaultStrategyConfig {
             name,
             bump,
         )?;
+
+        emit!(VaultStrategyConfigEvent {
+            creator: self.creator,
+            performance_fee: self.performance_fee,
+            vault_strategy_type: self.vault_strategy_type,
+            status: self.status,
+        });
+
         Ok(())
     }
 
@@ -89,6 +97,13 @@ impl VaultStrategyConfig {
 
         self.strategies.push(strategy);
         self.percentages.push(percentage);
+
+        emit!(VaultStrategyConfigEvent {
+            creator: self.creator,
+            performance_fee: self.performance_fee,
+            vault_strategy_type: self.vault_strategy_type,
+            status: self.status,
+        });
         Ok(())
     }
 
@@ -109,6 +124,23 @@ impl VaultStrategyConfig {
         );
 
         self.status = VaultStrategyStatus::Active;
+
+        emit!(VaultStrategyConfigEvent {
+            creator: self.creator,
+            performance_fee: self.performance_fee,
+            vault_strategy_type: self.vault_strategy_type,
+            status: self.status,
+        });
+
         Ok(())
     }
+}
+/// Emitted when update status of VaultStrategyConfig
+#[event]
+#[derive(Debug)]
+pub struct VaultStrategyConfigEvent {
+    pub creator: Pubkey,
+    pub performance_fee: u32,
+    pub vault_strategy_type: VaultStrategyType,
+    pub status: VaultStrategyStatus,
 }
