@@ -23,8 +23,8 @@ pub struct VaultStrategyConfig {
 }
 
 impl VaultStrategyConfig {
-    pub const SEED: &str = "vault_strategy_config:";
-    pub const VAULT_SEED: &str = "vault_strategy_config_vault";
+    pub const SEED: &str = "vlt_strategy_config:";
+    pub const VAULT_SEED: &str = "vlt_strtg_cfg_vault";
 
     pub fn initialize(
         &mut self,
