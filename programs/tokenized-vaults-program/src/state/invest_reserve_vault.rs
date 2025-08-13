@@ -1,4 +1,5 @@
 use anchor_lang::prelude::*;
+use crate::DISC_INVEST_RESERVE_VAULT_ACCOUNT;
 
 #[derive(Default, Debug, Clone, Copy, InitSpace, AnchorSerialize, AnchorDeserialize)]
 pub struct SwapToRatioVault {
@@ -8,7 +9,8 @@ pub struct SwapToRatioVault {
     pub token_1_amount: u64,
 }
 
-#[derive(Default, Debug, Clone, InitSpace, AnchorSerialize, AnchorDeserialize)]
+#[derive(Default, Debug, InitSpace)]
+#[account(discriminator = DISC_INVEST_RESERVE_VAULT_ACCOUNT)]
 pub struct InvestReserveVault {
     pub vault_strategy_config_key: Pubkey,
     pub reserved_amount: u64,

@@ -6,3 +6,6 @@ pub use deposit_to_escrow::*;
 
 pub mod withdraw_from_escrow;
 pub use withdraw_from_escrow::*;
+
+pub mod invest_reserve;
+pub use invest_reserve::*;

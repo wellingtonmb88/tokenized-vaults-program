@@ -90,4 +90,10 @@ pub enum TokenizedVaultsErrorCode {
 
     #[msg("Insufficient shares")]
     InsufficientShares,
+
+    #[msg("Invalid strategy index")]
+    InvalidStrategyIndex,
+
+    #[msg("Invalid allocation - total does not match reserved amount")]
+    InvalidAllocation,
 }
