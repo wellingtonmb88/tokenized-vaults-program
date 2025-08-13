@@ -43,3 +43,4 @@ pub const DISC_DEPOSIT_TO_ESCROW_IX: &[u8] = &[6];
 pub const DISC_WITHDRAW_FROM_ESCROW_IX: &[u8] = &[7];
 pub const DISC_PAUSE_VAULT_IX: &[u8] = &[8];
 pub const DISC_UNPAUSE_VAULT_IX: &[u8] = &[9];
+pub const DISC_INVEST_RESERVE_IX: &[u8] = &[10];

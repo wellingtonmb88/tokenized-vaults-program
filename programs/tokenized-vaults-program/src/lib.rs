@@ -107,4 +107,9 @@ pub mod tokenized_vaults_program {
     pub fn withdraw_from_escrow(ctx: Context<WithdrawFromEscrow>, amount: u64) -> Result<()> {
         withdraw_from_escrow::handler(ctx, amount)
     }
+
+    #[instruction(discriminator = DISC_INVEST_RESERVE_IX)]
+    pub fn invest_reserve(ctx: Context<InvestReserve>, amount: u64) -> Result<()> {
+        invest_reserve::handler(ctx, amount)
+    }
 }
