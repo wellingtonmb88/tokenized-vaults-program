@@ -81,6 +81,13 @@ impl InvestorStrategyPosition {
             .ok_or(TokenizedVaultsErrorCode::MathOverflow)?;
 
         require!(shares > 0, TokenizedVaultsErrorCode::SharesCalculatedToZero);
+
+        emit!(InvestorStrategyPositionEvent {
+            authority: self.authority,
+            vault_strategy_key: self.vault_strategy_key,
+            shares: total_vault_shares,
+            assets: total_vault_assets,
+        });
         Ok(shares as u64)
     }
 

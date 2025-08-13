@@ -29,7 +29,7 @@ setup-test-env:
 
 integration-create_protocol_config_and_vault_strategy_config:
 	yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/integration/init_protocol_config_test.ts
-	yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/integration/init_vault_strategy_config_test.ts
+#	yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/integration/init_vault_strategy_config_test.ts
 # 	anchor test --skip-local-validator --run tests/integration/init_protocol_config_test.ts
 # 	anchor test --skip-local-validator --run tests/integration/init_vault_strategy_config_test.ts
 

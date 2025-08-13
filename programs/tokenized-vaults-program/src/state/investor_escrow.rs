@@ -27,6 +27,10 @@ impl InvestorEscrow {
             .amount
             .checked_add(amount)
             .ok_or(crate::error::TokenizedVaultsErrorCode::MathOverflow)?;
+         emit!(InvestorEscrowDepositEvent {
+            authority: self.authority,
+            amount
+        });
         Ok(())
     }
 
@@ -55,6 +59,10 @@ impl InvestorEscrow {
             .amount
             .checked_sub(amount)
             .ok_or(crate::error::TokenizedVaultsErrorCode::MathOverflow)?;
+         emit!(InvestorEscrowEvent {
+            authority: self.authority,
+            amount
+        });
         Ok(())
     }
 
@@ -76,6 +84,30 @@ impl InvestorEscrow {
 
         self.withdraw(amount)?;
 
+        emit!(InvestorEscrowWithdrawEvent {
+            authority: self.authority,
+            amount
+        });
+
         Ok(())
     }
+}
+
+#[event]
+#[derive(Debug)]
+pub struct InvestorEscrowEvent {
+    pub authority: Pubkey,
+    pub amount: u64,
+}
+#[event]
+#[derive(Debug)]
+pub struct InvestorEscrowDepositEvent {
+    pub authority: Pubkey,
+    pub amount: u64,
+}
+#[event]
+#[derive(Debug)]
+pub struct InvestorEscrowWithdrawEvent {
+    pub authority: Pubkey,
+    pub amount: u64,
 }
