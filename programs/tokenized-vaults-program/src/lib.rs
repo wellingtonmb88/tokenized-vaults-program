@@ -110,6 +110,11 @@ pub mod tokenized_vaults_program {
         withdraw_from_escrow::handler(ctx, amount)
     }
 
+    #[instruction(discriminator = DISC_INVEST_RESERVE_IX)]
+    pub fn invest_reserve(ctx: Context<InvestReserve>, amount: u64) -> Result<()> {
+        invest_reserve::handler(ctx, amount)
+    }
+
     #[instruction(discriminator = DISC_SWAP_TO_RATIO_RAYDIUM_VAULT_STRATEGY_IX)]
     pub fn swap_to_ratio_raydium_vault_strategy<'a, 'b, 'c, 'info>(
         ctx: Context<'a, 'b, 'c, 'info, SwapToRatioRaydiumVaultStrategy<'info>>,
@@ -128,8 +133,5 @@ pub mod tokenized_vaults_program {
         )
     }
 
-    #[instruction(discriminator = DISC_INVEST_RESERVE_IX)]
-    pub fn invest_reserve(ctx: Context<InvestReserve>, amount: u64) -> Result<()> {
-        invest_reserve::handler(ctx, amount)
-    }
+    
 }
