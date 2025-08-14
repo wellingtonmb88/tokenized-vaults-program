@@ -13,7 +13,7 @@ pub struct ProtocolConfig {
 }
 
 impl ProtocolConfig {
-    pub const SEED: &str = "protocol_config:";
+    pub const SEED: &'static str = "protocol_config:";
 
     pub fn initialize(
         &mut self,
@@ -39,6 +39,12 @@ impl ProtocolConfig {
         );
 
         self.set_inner(admin_authority, protocol_fees, ProtocolStatus::Active, bump)?;
+
+        emit!(ProtocolConfigEvent {
+            admin_authority,
+            protocol_fees,
+            status: self.status,
+        });
         Ok(())
     }
 
@@ -53,6 +59,7 @@ impl ProtocolConfig {
         self.protocol_fees = protocol_fees;
         self.status = status;
         self.bump = bump;
+
         Ok(())
     }
 
@@ -64,6 +71,11 @@ impl ProtocolConfig {
         );
 
         self.status = ProtocolStatus::Paused;
+        emit!(ProtocolConfigEvent {
+            admin_authority: self.admin_authority,
+            protocol_fees: self.protocol_fees,
+            status: self.status,
+        });
         Ok(())
     }
 
@@ -75,6 +87,20 @@ impl ProtocolConfig {
         );
 
         self.status = ProtocolStatus::Active;
+
+        emit!(ProtocolConfigEvent {
+            admin_authority: self.admin_authority,
+            protocol_fees: self.protocol_fees,
+            status: self.status,
+        });
         Ok(())
     }
+}
+/// Emitted when update status of Protocolconfig
+#[event]
+#[derive(Debug)]
+pub struct ProtocolConfigEvent {
+    pub admin_authority: Pubkey,
+    pub protocol_fees: u32,
+    pub status: ProtocolStatus,
 }
