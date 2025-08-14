@@ -15,18 +15,13 @@ import {
 import * as anchor from "@coral-xyz/anchor";
 import { web3 } from "@coral-xyz/anchor";
 import { confirmTransaction } from "@solana-developers/helpers";
-import {
-  ASSOCIATED_PROGRAM_ID,
-  TOKEN_PROGRAM_ID,
-} from "@coral-xyz/anchor/dist/cjs/utils/token";
+import { TOKEN_PROGRAM_ID } from "@coral-xyz/anchor/dist/cjs/utils/token";
 import {
   ACCOUNT_SIZE,
-  createAssociatedTokenAccount,
   createCloseAccountInstruction,
   createInitializeAccountInstruction,
   createTransferInstruction,
   getAssociatedTokenAddress,
-  getAssociatedTokenAddressSync,
   getMinimumBalanceForRentExemptAccount,
   getOrCreateAssociatedTokenAccount,
   NATIVE_MINT,
@@ -57,6 +52,9 @@ export const airdrop = async (
   address: PublicKey,
   amount = 100 /** max testnet/devnet 100 SOL */ * LAMPORTS_PER_SOL
 ) => {
+  if (process.env.ENV === "devnet") {
+    return;
+  }
   const signature = await connection.requestAirdrop(address, amount);
   const latestBlockhash = await connection.getLatestBlockhash();
   await connection.confirmTransaction(
@@ -123,74 +121,83 @@ export const createLookUpTable = async ({
   payer,
   authority,
   addresses,
+  reuseTable,
 }: {
   connection: anchor.web3.Connection;
   payer: Keypair;
   authority: Keypair;
   addresses: PublicKey[];
+  reuseTable?: PublicKey;
 }) => {
-  const slot = await connection.getSlot();
-  const [lookupTableInst, lookupTableAddress] =
-    anchor.web3.AddressLookupTableProgram.createLookupTable({
-      authority: authority.publicKey,
-      payer: payer.publicKey,
-      recentSlot: slot - 1,
+  if (!reuseTable) {
+    const slot = await connection.getSlot();
+    const [lookupTableInst, lookupTableAddress] =
+      anchor.web3.AddressLookupTableProgram.createLookupTable({
+        authority: authority.publicKey,
+        payer: payer.publicKey,
+        recentSlot: slot - 1,
+      });
+
+    console.log(
+      "\n Created lookup table with address:",
+      lookupTableAddress.toBase58()
+    );
+    console.log();
+
+    let blockhash = await connection
+      .getLatestBlockhash()
+      .then((res) => res.blockhash);
+
+    const extendInstruction =
+      anchor.web3.AddressLookupTableProgram.extendLookupTable({
+        payer: payer.publicKey,
+        authority: authority.publicKey,
+        lookupTable: lookupTableAddress,
+        addresses,
+      });
+
+    const messageV0 = new web3.TransactionMessage({
+      payerKey: payer.publicKey,
+      recentBlockhash: blockhash,
+      instructions: [lookupTableInst, extendInstruction],
+    }).compileToV0Message();
+
+    const transaction = new web3.VersionedTransaction(messageV0);
+
+    //// sign your transaction with the required `Signers`
+    transaction.sign([payer]);
+
+    const txId = await connection.sendTransaction(transaction, {
+      skipPreflight: false,
+      preflightCommitment: "finalized",
     });
 
-  console.log(
-    "\n Created lookup table with address:",
-    lookupTableAddress.toBase58()
-  );
-  console.log();
+    await confirmTransaction(connection as any, txId, "finalized");
+    await sleep(1000);
+    console.log();
+    console.log(
+      "LookUpTable",
+      `https://explorer.solana.com/tx/${txId}?cluster=custom&customUrl=http://localhost:8899`
+    );
+    console.log();
+    await sleep(3000);
 
-  let blockhash = await connection
-    .getLatestBlockhash()
-    .then((res) => res.blockhash);
-
-  const extendInstruction =
-    anchor.web3.AddressLookupTableProgram.extendLookupTable({
-      payer: payer.publicKey,
-      authority: authority.publicKey,
-      lookupTable: lookupTableAddress,
-      addresses,
-    });
-
-  const messageV0 = new web3.TransactionMessage({
-    payerKey: payer.publicKey,
-    recentBlockhash: blockhash,
-    instructions: [lookupTableInst, extendInstruction],
-  }).compileToV0Message();
-
-  const transaction = new web3.VersionedTransaction(messageV0);
-
-  //// sign your transaction with the required `Signers`
-  transaction.sign([payer]);
-
-  const txId = await connection.sendTransaction(transaction, {
-    preflightCommitment: "confirmed",
-  });
-
-  await confirmTransaction(connection as any, txId);
-  console.log();
-  console.log(
-    "LookUpTable",
-    `https://explorer.solana.com/tx/${txId}?cluster=custom&customUrl=http://localhost:8899`
-  );
-  console.log();
-
-  await sleep(3000);
-
-  const lookupTableAccount = (
-    await connection.getAddressLookupTable(
-      lookupTableAddress,
-      // new PublicKey("AvmfsCtNGJ7ec1fgPejs4Yh8obie6XwhPDq7Da3E8aqq"),
-      {
+    const lookupTableAccount = (
+      await connection.getAddressLookupTable(lookupTableAddress, {
         commitment: "confirmed",
-      }
-    )
-  ).value;
+      })
+    ).value;
 
-  return { lookupTableAddress, lookupTableAccount };
+    return { lookupTableAddress, lookupTableAccount };
+  } else {
+    const lookupTableAccount = (
+      await connection.getAddressLookupTable(reuseTable, {
+        commitment: "confirmed",
+      })
+    ).value;
+
+    return { reuseTable, lookupTableAccount };
+  }
 };
 
 export const wrapSol = async ({
@@ -260,7 +267,7 @@ export const wrapSol = async ({
   return ata.address;
 };
 
-export const transferToken = async ({
+export const transferToTokenAccount = async ({
   connection,
   owner,
   mint,
@@ -282,6 +289,54 @@ export const transferToken = async ({
   let tx = new Transaction().add(
     // transfer
     createTransferInstruction(sourceAta, destination, owner.publicKey, amount)
+  );
+
+  console.log(
+    `Transfer Token ${mint.toBase58()} txhash: ${await sendAndConfirmTransaction(
+      connection as any,
+      tx,
+      [owner]
+    )}\n`
+  );
+};
+
+export const transferToken = async ({
+  connection,
+  owner,
+  mint,
+  destination,
+  amount,
+}: {
+  connection: anchor.web3.Connection;
+  owner: Keypair;
+  mint: PublicKey;
+  destination: PublicKey;
+  amount: number;
+}) => {
+  // Get the owner's associated token account for the mint (source)
+  // const sourceAta = await getAssociatedTokenAddress(mint, owner.publicKey);
+  const sourceAta = await getOrCreateAssociatedTokenAccount(
+    connection as any,
+    owner,
+    mint,
+    owner.publicKey,
+    false,
+    "confirmed",
+    { skipPreflight: false },
+    TOKEN_PROGRAM_ID
+  );
+  console.log(
+    `\n Token: ${mint.toBase58()} / Source ATA: ${sourceAta.address.toBase58()}`
+  );
+
+  let tx = new Transaction().add(
+    // transfer
+    createTransferInstruction(
+      sourceAta.address,
+      destination,
+      owner.publicKey,
+      amount
+    )
   );
 
   console.log(

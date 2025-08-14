@@ -10,7 +10,7 @@ name = "tokenized_vaults_program"
 
 [features]
 default = []
-devnet = []
+devnet = ["raydium-clmm-cpi/devnet"]
 cpi = ["no-entrypoint"]
 no-entrypoint = []
 no-idl = []
@@ -19,7 +19,15 @@ idl-build = ["anchor-lang/idl-build", "anchor-spl/idl-build"]
 
 
 [dependencies]
-anchor-lang = "=0.31.1"
-anchor-spl = "=0.31.1"
-raydium-clmm-cpi = { git = "https://github.com/raydium-io/raydium-cpi", package = "raydium-clmm-cpi", branch = "anchor-0.31.1" }
+anchor-lang = { version = "0.31.1", features = ["init-if-needed"] }
+anchor-spl = { version = "0.31.1", features = ["metadata", "memo"] }
+raydium-clmm-cpi = { git = "https://github.com/raydium-io/raydium-cpi", package = "raydium-clmm-cpi", branch = "anchor-0.31.1" } 
 pyth-solana-receiver-sdk = "=0.6.1"
+num-bigint = "0.4"
+uint = { git = "https://github.com/raydium-io/parity-common", package = "uint" }
+
+
+[dev-dependencies]
+quickcheck = "1.0.3"
+proptest = "1.0"
+rand = "0.9.2"

@@ -1,6 +1,5 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
-import dotenv from "dotenv";
 import { TokenizedVaultsProgram } from "../target/types/tokenized_vaults_program";
 import {
   PublicKey,
@@ -10,8 +9,9 @@ import {
   sendAndConfirmTransaction,
 } from "@solana/web3.js";
 import { expect } from "chai";
+import { setupDotEnv } from "../app/config";
 
-dotenv.config();
+setupDotEnv();
 
 describe("tokenized-vaults-program", () => {
   // Configure the client to use devnet

@@ -1,5 +1,10 @@
 #![allow(deprecated, unexpected_cfgs)]
 use anchor_lang::prelude::*;
+use anchor_spl::{
+    associated_token::AssociatedToken,
+    token::Token,
+    token_interface::{Mint, TokenAccount},
+};
 
 use crate::{error::TokenizedVaultsErrorCode, state::*, ProtocolStatus, VaultStrategyType};
 
@@ -16,13 +21,39 @@ pub struct InitVaultStrategyConfig<'info> {
     pub protocol_config: Account<'info, ProtocolConfig>,
 
     #[account(
-        init,
+        init_if_needed,
         payer = creator,
         space = VaultStrategyConfig::DISCRIMINATOR.len() +VaultStrategyConfig::INIT_SPACE,
         seeds = [VaultStrategyConfig::SEED.as_bytes(), creator.key().as_ref(), name.as_ref()],
         bump
     )]
     pub vault_strategy_config: Account<'info, VaultStrategyConfig>,
+
+    /// The escrow account for the USDC
+    /// Vault strategy Config receives USDC in this account from User's escrow vault
+    #[account(
+        init_if_needed,
+        payer = creator,
+        associated_token::mint = usdc_mint,
+        associated_token::authority = vault_strategy_config,
+        // seeds = [
+        //     VaultStrategyConfig::VAULT_SWAP_TO_RATIO_USDC_ESCROW_SEED.as_bytes(),
+        //     vault_strategy_config.key().as_ref(),
+        // ],
+        // bump,
+        // token::mint = usdc_mint,
+        // token::authority = vault_strategy_config,
+    )]
+    pub vault_strategy_cfg_usdc_escrow: InterfaceAccount<'info, TokenAccount>,
+
+    #[account()]
+    pub usdc_mint: InterfaceAccount<'info, Mint>,
+
+    /// Program to create mint account and mint tokens
+    pub token_program: Program<'info, Token>,
+
+    /// Program to create an ATA for receiving position NFT
+    pub associated_token_program: Program<'info, AssociatedToken>,
 
     pub system_program: Program<'info, System>,
 }

@@ -12,7 +12,7 @@ pub struct InvestorEscrow {
 
 impl InvestorEscrow {
     pub const SEED: &'static str = "investor_escrow:";
-    pub const VAULT_SEED: &'static str = "escrow_vault";
+    pub const VAULT_SEED: &'static str = "escrow_vault:";
 
     pub fn initialize(&mut self, authority: Pubkey, bump: u8) -> Result<()> {
         self.authority = authority;

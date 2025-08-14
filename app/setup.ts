@@ -14,15 +14,16 @@ import {
   VersionedTransaction,
 } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
-import dotenv from "dotenv";
 import {
   _masterWallet,
   _creatorWallet,
   devConfigs,
   initSdk,
   txVersion,
+  connection,
+  setupDotEnv,
 } from "./config";
-import { Raydium } from "@raydium-io/raydium-sdk-v2";
+import { ClmmConfigInfo, Raydium } from "@raydium-io/raydium-sdk-v2";
 import {
   ACCOUNT_SIZE,
   createAssociatedTokenAccount,
@@ -40,25 +41,30 @@ import Decimal from "decimal.js";
 import { getSimulationComputeUnits } from "@solana-developers/helpers";
 import { createPosition } from "./create-position";
 import { airdrop, sleep } from "./utils";
-import { USDC } from "./constants";
+import { CLMM_PROGRAM_ID, TokenA, TokenB, USDC } from "./constants";
+import { AnchorProvider, Wallet } from "@coral-xyz/anchor";
 
-dotenv.config();
-
-const CLMM_PROGRAM_ID = "CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK";
-const CLMM_PROGRAM_ID_DEVNET = "devi51mZmdwUJGU9hjN27vEz64Gps7uUefqxg27EAtH";
+setupDotEnv();
 
 let masterWallet: Keypair;
 let creatorWallet: Keypair;
 let raydium: Raydium;
 
-const provider = anchor.AnchorProvider.env();
-anchor.setProvider(provider);
-
-const connection = provider.connection;
+let provider;
 
 const run = async () => {
   masterWallet = _masterWallet;
   creatorWallet = _creatorWallet;
+
+  provider = new AnchorProvider(
+    connection as any,
+    new Wallet(masterWallet as any),
+    {
+      commitment: "confirmed",
+    }
+  );
+  anchor.setProvider(provider);
+
   await airdrop(
     connection as any,
     creatorWallet.publicKey,
@@ -77,64 +83,112 @@ const run = async () => {
 
   raydium = await initSdk({ owner: masterWallet, loadToken: true });
 
-  //  await _createMints({
+  // const { mintA, mintB } = await _createMints({
   //   authority: masterWallet,
   //   to: masterWallet.publicKey,
   // });
-  await _createWSOLMints({
-    authority: masterWallet,
-    to: masterWallet.publicKey,
-  });
-  await _createWSOLMints({
-    authority: masterWallet,
-    to: creatorWallet.publicKey,
-  });
 
-  let mintA = USDC;
-  // let mintB = new PublicKey("w7SBDvWxBmBSJdwLKAMPC1nz3sXvALBGW1j7oCvFK35");
+  // await _createWSOLMints({
+  //   authority: masterWallet,
+  //   to: masterWallet.publicKey,
+  // });
+  // await _createWSOLMints({
+  //   authority: masterWallet,
+  //   to: creatorWallet.publicKey,
+  // });
 
-  console.log("Minting token A (USDC)");
+  console.log("\nMinting token A", TokenA.toBase58());
   await _mintTo(
     provider.connection as any,
     masterWallet,
     masterWallet.publicKey,
-    mintA,
+    TokenA,
     100_000
   );
   await _mintTo(
     provider.connection as any,
     masterWallet,
     creatorWallet.publicKey,
-    mintA,
+    TokenA,
+    100_000
+  );  
+
+  console.log("\nMinting token B", TokenB.toBase58());
+  await _mintTo(
+    provider.connection as any,
+    masterWallet,
+    masterWallet.publicKey,
+    TokenB,
+    100_000
+  );
+  await _mintTo(
+    provider.connection as any,
+    masterWallet,
+    creatorWallet.publicKey,
+    TokenB,
     100_000
   );
 
-  console.log("Creating pool WSOL/USDC");
-  const poolIdA = await createPool(
-    raydium,
-    NATIVE_MINT.toBase58(),
-    mintA.toBase58(),
-    true
-  ); // WSOL - mintA => poolIdA J4XJekUt9aXzhrqWDpm5kujo1fTkkSmmtrHedixswks1
+  const tokenArray = [TokenA, TokenB];
+  tokenArray.sort((a, b) => {
+    const bufferA = a.toBuffer();
+    const bufferB = b.toBuffer();
+    return Buffer.compare(bufferA, bufferB);
+  });
 
-  // const poolIdB = await createPool(
-  //   raydium,
-  //   NATIVE_MINT.toBase58(),
-  //   mintB.toBase58(),
-  //   true
-  // ); //// WSOL - mintB => poolIdB GhCPpMsZChcuPmmfxCMJrWz2CtL5xBzSTFQLPrMzpWsf
+  const sortedMint0 = tokenArray[0];
+  const sortedMint1 = tokenArray[1];
 
-  // const poolIdC = await createPool(
-  //   raydium,
-  //   mintA.toBase58(),
-  //   mintB.toBase58(),Azg24cVCSqusnejCLHYJe3toi1D38Y85MU1AJZyU6DVY
-  //   true
-  // ); //// mintA - mintB => poolIdC RHkbPaJvxRzLN6hvAgqHTQEU1qdqurHR7iYrGwJ11LD
+  if (process.env.ENV !== "devnet") {
 
-  console.log("Creating position for Pool WSOL/USDC");
-  await createPosition(raydium, poolIdA).catch(console.error);
-  // await createPosition(raydium, poolIdB).catch(console.error);
+  // console.log("\nMinting token USDC", USDC.toBase58());
+  await _mintTo(
+    provider.connection as any,
+    masterWallet,
+    masterWallet.publicKey,
+    USDC,
+    100_000
+  );
+  await _mintTo(
+    provider.connection as any,
+    masterWallet,
+    creatorWallet.publicKey,
+    USDC,
+    100_000
+  );
 
+    const poolIdA = await createPool(
+      raydium,
+      USDC.toBase58(),
+      sortedMint0.toBase58()
+    ); // USDC - mintA
+
+    const poolIdB = await createPool(
+      raydium,
+      USDC.toBase58(),
+      sortedMint1.toBase58()
+    ); //// USDC - mintB
+
+    const poolIdC = await createPool(
+      raydium,
+      sortedMint0.toBase58(),
+      sortedMint1.toBase58()
+    ); //// mintA - mintB
+
+    console.log("Creating position for Pool ");
+    const inputAmount = 5; // MintA amount
+    // await createPosition(raydium, poolIdA, inputAmount).catch(console.error);
+    // await createPosition(raydium, poolIdB, inputAmount).catch(console.error);
+    // await createPosition(raydium, poolIdC, inputAmount).catch(console.error);
+    await createPosition(raydium, "CTBsu4QkD6XpCfQMbkTXfYRXu6tmT8K1J9nUFbHdsL4c", inputAmount).catch(console.error);
+    await createPosition(raydium, "BYsxZtgTDuq3ACvQSoDwVXzoCc4NEyc6JZYc4PMLEGrC", inputAmount).catch(console.error);
+    await createPosition(raydium, "6WZxvb9wgVGWf8QqT5mYErvB5wR2Kz17JLn45WCMTm5P", inputAmount).catch(console.error);
+  } else {
+
+    const inputAmount = 5; // MintA amount
+    await createPosition(raydium, "Fm4ByxNKoPcVbm37hKzVcNfuDpfMzcsjt58KstSc6vdU", inputAmount).catch(console.error);
+    await createPosition(raydium, "71XkvPSrY4g4gQU2afowkbEkAFLKeicDTr5hXAA9h8Dh", inputAmount).catch(console.error);
+  }
   console.log("done");
   process.exit();
 };
@@ -150,62 +204,6 @@ const _createMints = async ({
   console.log(mintA);
   const mintB = await _createMintTo(provider.connection as any, authority, to);
   console.log(mintB);
-
-  const toAta = await getOrCreateAssociatedTokenAccount(
-    provider.connection as any,
-    authority,
-    NATIVE_MINT,
-    to,
-    false,
-    "confirmed"
-  );
-
-  let auxAccount = Keypair.generate();
-
-  let amount = 5_000 * LAMPORTS_PER_SOL; /* Wrapped SOL's decimals is 9 */
-
-  let tx = new Transaction().add(
-    // create token account
-    SystemProgram.createAccount({
-      fromPubkey: authority.publicKey,
-      newAccountPubkey: auxAccount.publicKey,
-      space: ACCOUNT_SIZE,
-      lamports:
-        (await getMinimumBalanceForRentExemptAccount(provider.connection)) +
-        amount, // rent + amount
-      programId: TOKEN_PROGRAM_ID,
-    }),
-    // init token account
-    createInitializeAccountInstruction(
-      auxAccount.publicKey,
-      NATIVE_MINT,
-      authority.publicKey
-    ),
-    // transfer WSOL
-    createTransferInstruction(
-      auxAccount.publicKey,
-      toAta.address,
-      authority.publicKey,
-      amount
-    ),
-    // close aux account
-    createCloseAccountInstruction(
-      auxAccount.publicKey,
-      authority.publicKey,
-      authority.publicKey
-    )
-  );
-
-  console.log(
-    `SOL -> WSOL txhash: ${await sendAndConfirmTransaction(
-      provider.connection as any,
-      tx,
-      [authority, auxAccount, authority]
-    )}`
-  );
-
-  // _mintTo(provider.connection, feePayer, mintA, 100000 * LAMPORTS_PER_SOL);
-  // _mintTo(provider.connection, feePayer, mintB, 100000 * LAMPORTS_PER_SOL);
 
   const tokenArray = [mintA, mintB];
   tokenArray.sort((a, b) => {
@@ -241,8 +239,9 @@ const _createWSOLMints = async ({
   await sleep(1000);
   let auxAccount = Keypair.generate();
 
-  let amount = 5_000 * LAMPORTS_PER_SOL; /* Wrapped SOL's decimals is 9 */
+  let amount = 10 * LAMPORTS_PER_SOL; /* Wrapped SOL's decimals is 9 */
 
+  console.log(`Creating WSOL mint for ${to.toBase58()}`);
   let tx = new Transaction().add(
     // create token account
     SystemProgram.createAccount({
@@ -351,7 +350,7 @@ const _mintTo = async (
     amount: mintAmount,
     to: toAta.address.toBase58(),
   });
-  await mintTo(
+  const tx = await mintTo(
     connection,
     authority,
     mint,
@@ -363,53 +362,34 @@ const _mintTo = async (
       commitment: "confirmed",
     }
   );
+  console.log("mintTo tx:", tx);
   return mint;
 };
 
-const _mintTo3 = async (
-  connection: Connection,
-  payer: Keypair,
-  mint: PublicKey,
-  amount: number
-): Promise<PublicKey> => {
-  const toAta = getAssociatedTokenAddressSync(mint, payer.publicKey);
-
-  await mintTo(
-    connection,
-    payer,
-    mint,
-    toAta,
-    payer.publicKey,
-    amount,
-    undefined,
-    {
-      commitment: "confirmed",
-    }
-  );
-
-  return mint;
-};
-
-const createPool = async (
-  raydium: Raydium,
-  mintA: string,
-  mintB: string,
-  dumpMainnet: boolean = false
-) => {
+const createPool = async (raydium: Raydium, mintA: string, mintB: string) => {
   // const raydium = await initSdk({ loadToken: true });
   // you can call sdk api to get mint info or paste mint info from api: https://api-v3.raydium.io/mint/list
-  const mint1 = await raydium.token.getTokenInfo(mintA);
-  const mint2 = await raydium.token.getTokenInfo(mintB);
+
+  const tokenArray = [new PublicKey(mintA), new PublicKey(mintB)];
+  tokenArray.sort((a, b) => {
+    const bufferA = a.toBuffer();
+    const bufferB = b.toBuffer();
+    return Buffer.compare(bufferA, bufferB);
+  });
+
+  const sortedMint0 = tokenArray[0];
+  const sortedMint1 = tokenArray[1];
+  const mint1 = await raydium.token.getTokenInfo(sortedMint0);
+  const mint2 = await raydium.token.getTokenInfo(sortedMint1);
+
   let clmmConfigs;
-  let programId;
-  if (dumpMainnet) {
+  const programId = new PublicKey(CLMM_PROGRAM_ID);
+  if (process.env.ENV !== "devnet") {
     clmmConfigs = await raydium.api.getClmmConfigs();
-    programId = new PublicKey(CLMM_PROGRAM_ID);
   } else {
-    programId = new PublicKey(CLMM_PROGRAM_ID_DEVNET);
     clmmConfigs = devConfigs; // devnet configs
   }
-  console.log("clmmConfigs", clmmConfigs[0]);
+  // console.log("clmmConfigs", clmmConfigs);
   const createPoolTx = await raydium.clmm.createPool({
     programId,
     mint1,
@@ -419,12 +399,12 @@ const createPool = async (
       id: new PublicKey(clmmConfigs[0].id),
       fundOwner: "",
       description: "",
-    },
+    } as ClmmConfigInfo,
     initialPrice: new Decimal(1),
     txVersion,
   });
   // don't want to wait confirm, set sendAndConfirm to false or don't pass any params to execute
-  const poolId = createPoolTx.extInfo.mockPoolInfo.id;
+  const poolId = createPoolTx.extInfo.address.id;
   console.log("poolId... ", poolId);
 
   try {

@@ -1,3 +1,5 @@
+use std::mem::MaybeUninit;
+
 use crate::{
     assert_vault_strategy_percentage, assert_vault_strategy_performance_fee,
     assert_vault_strategy_type, error::TokenizedVaultsErrorCode, VaultStrategyStatus,
@@ -25,6 +27,9 @@ pub struct VaultStrategyConfig {
 impl VaultStrategyConfig {
     pub const SEED: &str = "vault_strategy_config:";
     pub const VAULT_SEED: &str = "vlt_strtg_cfg_vault:";
+    pub const VAULT_SWAP_TO_RATIO_USDC_ESCROW_SEED: &str = "vlt_swap_ratio_usdc_escrow:";
+    pub const VAULT_SWAP_TO_RATIO_0_ESCROW_SEED: &str = "vlt_swap_ratio_0_escrow:";
+    pub const VAULT_SWAP_TO_RATIO_1_ESCROW_SEED: &str = "vlt_swap_ratio_1_escrow:";
 
     pub fn initialize(
         &mut self,

@@ -7,6 +7,7 @@ pub enum TokenizedVaultsErrorCode {
 
     #[msg("Fee cannot exceed 10% (100_000)")]
     FeeTooHigh,
+
     #[msg("Fee cannot be 0 or less (0)")]
     FeeTooLow,
 
@@ -93,6 +94,36 @@ pub enum TokenizedVaultsErrorCode {
 
     #[msg("Insufficient shares")]
     InsufficientShares,
+
+    #[msg("Invalid tick range")]
+    InvalidTickRange,
+
+    #[msg("sqrt_price_x64 out of range")]
+    SqrtPriceX64,
+
+    #[msg("The tick must be lesser than, or equal to the maximum tick(443636)")]
+    TickUpperOverflow,
+
+    #[msg("Invalid tick array")]
+    InvalidTickArray,
+
+    #[msg("Insufficient remaining accounts")]
+    InsufficientRemainingAccounts,
+
+    #[msg("Invalid remaining accounts for swap to ratio")]
+    InvalidRemainingAccountsForSwapToRatio,
+
+    #[msg("Max 3 swap to ratio vaults allowed")]
+    MaxSwapToRatioVaultsReached,
+
+    #[msg("SwapToRatioVault already exists")]
+    SwapToRatioVaultAlreadyExists,
+
+    #[msg("No SwapToRatioVaults to clear")]
+    NoSwapToRatioVaultsToClear,
+
+    #[msg("Transfer failed")]
+    TransferFailed,
 
     #[msg("Invalid strategy index")]
     InvalidStrategyIndex,
