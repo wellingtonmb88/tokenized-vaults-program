@@ -43,7 +43,6 @@ setup-test-env-localnet:
 	solana airdrop 1000 CrtNgYZaY74eqADuHxCYbQNsh33dBrAbkr71N7YSDoqE
 	export ENV=localnet && ts-node ./app/setup.ts
 
-<<<<<<< HEAD
 setup-test-env-devnet:
 	make set-config-devnet
 	export ENV=devnet && ts-node ./app/setup.ts
@@ -82,11 +81,6 @@ integration-devnet-swap_to_ratio_raydium_vault_strategy:
 
 integration-create_protocol_config: 
 	yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/integration/admin/init_protocol_config_test.ts 
-=======
-integration-create_protocol_config_and_vault_strategy_config:
-	yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/integration/init_protocol_config_test.ts
-#	yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/integration/init_vault_strategy_config_test.ts
->>>>>>> main
 # 	anchor test --skip-local-validator --run tests/integration/init_protocol_config_test.ts
 # 	anchor test --skip-local-validator --run tests/integration/init_vault_strategy_config_test.ts
 
