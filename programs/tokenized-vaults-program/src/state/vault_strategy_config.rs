@@ -57,6 +57,14 @@ impl VaultStrategyConfig {
             name,
             bump,
         )?;
+
+        emit!(VaultStrategyConfigEvent {
+            creator: self.creator,
+            performance_fee: self.performance_fee,
+            vault_strategy_type: self.vault_strategy_type,
+            status: self.status,
+        });
+
         Ok(())
     }
 
@@ -95,6 +103,50 @@ impl VaultStrategyConfig {
 
         self.strategies.push(strategy);
         self.percentages.push(percentage);
+
+        emit!(VaultStrategyConfigEvent {
+            creator: self.creator,
+            performance_fee: self.performance_fee,
+            vault_strategy_type: self.vault_strategy_type,
+            status: self.status,
+        });
         Ok(())
     }
+
+    pub fn pause_vault(&mut self) -> Result<()> {
+        require!(
+            self.status == VaultStrategyStatus::Active,
+            TokenizedVaultsErrorCode::VaultStrategyConfigNotActive
+        );
+
+        self.status = VaultStrategyStatus::Paused;
+        Ok(())
+    }
+
+    pub fn unpause_vault(&mut self) -> Result<()> {
+        require!(
+            self.status == VaultStrategyStatus::Paused,
+            TokenizedVaultsErrorCode::VaultStrategyConfigNotPaused
+        );
+
+        self.status = VaultStrategyStatus::Active;
+
+        emit!(VaultStrategyConfigEvent {
+            creator: self.creator,
+            performance_fee: self.performance_fee,
+            vault_strategy_type: self.vault_strategy_type,
+            status: self.status,
+        });
+
+        Ok(())
+    }
+}
+/// Emitted when update status of VaultStrategyConfig
+#[event]
+#[derive(Debug)]
+pub struct VaultStrategyConfigEvent {
+    pub creator: Pubkey,
+    pub performance_fee: u32,
+    pub vault_strategy_type: VaultStrategyType,
+    pub status: VaultStrategyStatus,
 }

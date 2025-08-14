@@ -51,6 +51,16 @@ pub mod tokenized_vaults_program {
         init_vault_strategy_config::handler(ctx, name, performance_fee, vault_strategy_type)
     }
 
+    #[instruction(discriminator = DISC_PAUSE_VAULT_IX)]
+    pub fn pause_vault(ctx: Context<PauseVault>) -> Result<()> {
+        pause_vault::handler(ctx)
+    }
+
+    #[instruction(discriminator = DISC_UNPAUSE_VAULT_IX)]
+    pub fn unpause_vault(ctx: Context<UnpauseVault>) -> Result<()> {
+        unpause_vault::handler(ctx)
+    }
+
     #[instruction(discriminator = DISC_CREATE_RAYDIUM_VAULT_STRATEGY_IX)]
     pub fn create_raydium_vault_strategy<'a, 'b, 'c, 'info>(
         ctx: Context<'a, 'b, 'c, 'info, CreateRaydiumVaultStrategy<'info>>,
@@ -116,5 +126,10 @@ pub mod tokenized_vaults_program {
             token_0_amount_out_min,
             token_1_amount_out_min,
         )
+    }
+
+    #[instruction(discriminator = DISC_INVEST_RESERVE_IX)]
+    pub fn invest_reserve(ctx: Context<InvestReserve>, amount: u64) -> Result<()> {
+        invest_reserve::handler(ctx, amount)
     }
 }

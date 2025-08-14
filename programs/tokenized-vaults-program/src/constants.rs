@@ -47,6 +47,9 @@ pub const DISC_CREATE_RAYDIUM_VAULT_STRATEGY_IX: &[u8] = &[4];
 pub const DISC_INIT_INVESTOR_ESCROW_IX: &[u8] = &[5];
 pub const DISC_DEPOSIT_TO_ESCROW_IX: &[u8] = &[6];
 pub const DISC_WITHDRAW_FROM_ESCROW_IX: &[u8] = &[7];
-pub const DISC_SWAP_TO_RATIO_RAYDIUM_VAULT_STRATEGY_IX: &[u8] = &[8];
+pub const DISC_PAUSE_VAULT_IX: &[u8] = &[8];
+pub const DISC_UNPAUSE_VAULT_IX: &[u8] = &[9];
+pub const DISC_INVEST_RESERVE_IX: &[u8] = &[10];
+pub const DISC_SWAP_TO_RATIO_RAYDIUM_VAULT_STRATEGY_IX: &[u8] = &[11];
 
 pub const DENOMINATOR_MULTIPLIER: u64 = 1_000_000_000;

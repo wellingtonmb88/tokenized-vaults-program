@@ -14,8 +14,8 @@ pub use vault_strategy::*;
 pub mod investor_strategy_position;
 pub use investor_strategy_position::*;
 
-pub mod constants;
-pub use constants::*;
-
 pub mod invest_reserve_vault;
 pub use invest_reserve_vault::*;
+
+pub mod constants;
+pub use constants::*;

@@ -7,6 +7,7 @@ pub enum TokenizedVaultsErrorCode {
 
     #[msg("Fee cannot exceed 10% (100_000)")]
     FeeTooHigh,
+
     #[msg("Fee cannot be 0 or less (0)")]
     FeeTooLow,
 
@@ -33,6 +34,9 @@ pub enum TokenizedVaultsErrorCode {
 
     #[msg("VaultStrategyConfig is not in draft status")]
     VaultStrategyConfigNotDraft,
+
+    #[msg("VaultStrategyConfig is not in paused status")]
+    VaultStrategyConfigNotPaused,
 
     #[msg("VaultStrategyConfig max strategies reached")]
     VaultStrategyConfigMaxStrategiesReached,
@@ -120,4 +124,10 @@ pub enum TokenizedVaultsErrorCode {
 
     #[msg("Transfer failed")]
     TransferFailed,
+
+    #[msg("Invalid strategy index")]
+    InvalidStrategyIndex,
+
+    #[msg("Invalid allocation - total does not match reserved amount")]
+    InvalidAllocation,
 }
