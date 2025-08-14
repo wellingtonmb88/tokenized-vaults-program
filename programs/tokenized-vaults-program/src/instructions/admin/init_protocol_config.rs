@@ -10,7 +10,7 @@ pub struct InitProtocolConfig<'info> {
     pub admin_authority: Signer<'info>,
 
     #[account(
-        init,
+        init_if_needed,
         payer = admin_authority,
         space = ProtocolConfig::DISCRIMINATOR.len() + ProtocolConfig::INIT_SPACE,
         seeds = [ProtocolConfig::SEED.as_bytes()],

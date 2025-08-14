@@ -1,32 +1,39 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
-import dotenv from "dotenv";
-import { TokenizedVaultsProgram } from "../../target/types/tokenized_vaults_program";
+import { TokenizedVaultsProgram } from "../../../target/types/tokenized_vaults_program";
 import {
   PublicKey,
   LAMPORTS_PER_SOL,
   sendAndConfirmTransaction,
-  Connection,
 } from "@solana/web3.js";
 import { expect } from "chai";
-import { _creatorWallet } from "../../app/config";
-import { VAULT_STRATEGY_CONFIG_NAME } from "./constants";
+import { _creatorWallet, connection, setupDotEnv } from "../../../app/config";
+import { VAULT_STRATEGY_CONFIG_NAME } from "../constants";
+import { USDC } from "../../../app/constants";
+import { airdrop } from "../../../app/utils";
 
-dotenv.config();
+setupDotEnv();
 
 describe("init-vault-strategy-config", () => {
   // Configure the client to use devnet
-  const provider = anchor.AnchorProvider.env();
-  anchor.setProvider(provider);
+  // const provider = anchor.AnchorProvider.env();
+  // anchor.setProvider(provider);
+
+  const creator = _creatorWallet;
 
   // Get the provider and connection objects
-  const connection = new Connection("http://127.0.0.1:8899", "confirmed");
+  const provider = new anchor.AnchorProvider(
+    connection as any,
+    new anchor.Wallet(creator as any),
+    {
+      commitment: "confirmed",
+    }
+  );
+  anchor.setProvider(provider);
 
   const program = anchor.workspace
     .tokenizedVaultsProgram as Program<TokenizedVaultsProgram>;
   const programId = program.programId;
-
-  const creator = _creatorWallet;
 
   // Derive the vault strategy config PDA with seeds
   const [vaultStrategyConfigPda] = PublicKey.findProgramAddressSync(
@@ -49,12 +56,11 @@ describe("init-vault-strategy-config", () => {
 
     // Only airdrop if balance is insufficient
     if (adminBalance < LAMPORTS_PER_SOL) {
-      console.log("Requesting airdrop for admin...");
-      const airdropSignature = await connection.requestAirdrop(
+      await airdrop(
+        connection as any,
         creator.publicKey,
-        200 * anchor.web3.LAMPORTS_PER_SOL
+        200 * LAMPORTS_PER_SOL
       );
-      await connection.confirmTransaction(airdropSignature);
     }
   });
 
@@ -67,14 +73,19 @@ describe("init-vault-strategy-config", () => {
       })
       .accounts({
         creator: creator.publicKey,
+        usdcMint: USDC,
       })
       .signers([creator])
       .transaction();
 
     const txSignature = await sendAndConfirmTransaction(
-      provider.connection as any,
+      connection as any,
       tx as any,
-      [creator]
+      [creator],
+      {
+        skipPreflight: false,
+        preflightCommitment: "finalized",
+      }
     );
 
     console.log(`Transaction signature: ${txSignature}`);

@@ -1,0 +1,48 @@
+const CLMM_PROGRAM_ID_DEVNET: "devi51mZmdwUJGU9hjN27vEz64Gps7uUefqxg27EAtH"
+
+
+// USDC/TokenA (6f6oRyiWZygx1Acs5N5UNjz4gxeVuHecPvkYaerJM4XP)
+poolId...  Fm4ByxNKoPcVbm37hKzVcNfuDpfMzcsjt58KstSc6vdU
+
+// USDC/TokenB (8jPySmXB3Yt41AkTyLQW3JDvu2uL7GSX2sfsofTkHwvp)
+poolId...  71XkvPSrY4g4gQU2afowkbEkAFLKeicDTr5hXAA9h8Dh
+
+// TokenA (6f6oRyiWZygx1Acs5N5UNjz4gxeVuHecPvkYaerJM4XP) /TokenB (8jPySmXB3Yt41AkTyLQW3JDvu2uL7GSX2sfsofTkHwvp)
+poolId...  5CsfFEZVw2hjjEM1GEBam61ADdBnNLGTo4t2Gfb5oEzt
+
+
+clmm position opened: {
+  txId: '5uRNMMngVVhaPoGLimHhV1TxCz2KgaDQCH5HYa29v5TtEErboqq8jeP5cdsW4SqnFiekr9sXDk7QY6JLhgv9qwGe',
+  nft: 'GdZcdb5HV4bxMMrew7fqb9P7WybYK4sg7gCcvihwjWhe'
+}
+poolId...  Fm4ByxNKoPcVbm37hKzVcNfuDpfMzcsjt58KstSc6vdU
+current price: 1.00000
+current tick: 69090
+tickUpper/tickLower: 145100 -69090
+amountA/amountB  5000000 5109212471
+
+
+
+clmm position opened: {
+  txId: '4FHRA7sH3Wj8bAsps3FUZd2VmedD4WSUY9estmarRvhjMGWdajkzTtyrEmJrnGq2XeuCiVMuG3RiryqNJzoSe5Cb',
+  nft: '3wPo87A8Z9HRfwMdjysGw7nrJNP45DhfCGDiayCfXta8'
+}
+poolId...  71XkvPSrY4g4gQU2afowkbEkAFLKeicDTr5hXAA9h8Dh
+current price: 1.00000
+current tick: 69090
+tickUpper/tickLower: 145100 -69090
+amountA/amountB  5000000 5109212471
+
+
+clmm position opened: {
+  txId: '4wQ5dQSjzc4eBEXgLo3xgmw7vu1DaBhUysh7xQBb2SifGPWY7rT6HEiwjP8uo5d6vkZpSZaHMvX6i6bXu4Snyvos',
+  nft: 'Dt3UzrLQq9bvoiPzi6dB9cFYUvMRpyPMevVzWavvy4Re'
+}
+poolId...  5CsfFEZVw2hjjEM1GEBam61ADdBnNLGTo4t2Gfb5oEzt
+current price: 1.00000
+current tick: 0
+tickUpper/tickLower: 76020 -138170
+amountA/amountB  5000000000 5109206347
+
+Lookuptabel 
+        new PublicKey("B18fZumSvQUQnLQphEN3jkx5aNwyD6SmB4TwWypujqHr"),

@@ -1,4 +1,8 @@
 use anchor_lang::prelude::*;
+use anchor_spl::{
+    token::{transfer_checked, Token, TransferChecked},
+    token_interface::{Mint, TokenAccount},
+};
 use pyth_solana_receiver_sdk::price_update::{get_feed_id_from_hex, PriceUpdateV2};
 
 pub const MAXIMUM_PRICE_AGE: u64 = 600; // Ten minutes
@@ -81,6 +85,33 @@ pub fn convert_amounts_to_usd(
         .ok_or(error!(crate::error::TokenizedVaultsErrorCode::MathOverflow))?;
 
     Ok((amount_0_usd, amount_1_usd))
+}
+
+pub fn transfer_token<'info>(
+    from: &InterfaceAccount<'info, TokenAccount>,
+    to: &InterfaceAccount<'info, TokenAccount>,
+    amount: &u64,
+    mint: &InterfaceAccount<'info, Mint>,
+    authority: &AccountInfo<'info>,
+    token_program: &Program<'info, Token>,
+    signer_seeds: Option<&[&[&[u8]]]>,
+) -> Result<()> {
+    let transfer_accounts_options = TransferChecked {
+        mint: mint.to_account_info(),
+        from: from.to_account_info(),
+        to: to.to_account_info(),
+        authority: authority.to_account_info(),
+    };
+
+    let mut cpi_context =
+        CpiContext::new(token_program.to_account_info(), transfer_accounts_options);
+    if let Some(seeds) = signer_seeds {
+        let seeds_slice = seeds;
+        cpi_context = cpi_context.with_signer(seeds_slice);
+        transfer_checked(cpi_context, *amount, mint.decimals)
+    } else {
+        transfer_checked(cpi_context, *amount, mint.decimals)
+    }
 }
 
 /// Normalize token amount to target decimal places

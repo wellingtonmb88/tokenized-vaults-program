@@ -14,8 +14,10 @@ pub mod status;
 pub use status::*;
 pub mod asserts;
 pub use asserts::*;
+pub mod libraries;
+pub use libraries::*;
 
-declare_id!("J3V7DSboqCBj1ybAaRb7By3xstEHfkdQkFw2TGvZNriU");
+declare_id!("YyUUJsRpeJ5fJEL6JBD7LKibaK43LXov4FzHs2w53J4");
 
 #[program]
 pub mod tokenized_vaults_program {
@@ -29,7 +31,7 @@ pub mod tokenized_vaults_program {
         init_protocol_config::handler(ctx, protocol_fees)
     }
 
-    #[instruction(discriminator = 1)]
+    #[instruction(discriminator = DISC_PAUSE_PROTOCOL_IX)]
     pub fn pause_protocol(ctx: Context<PauseProtocol>) -> Result<()> {
         pause_protocol::handler(ctx)
     }
@@ -98,4 +100,21 @@ pub mod tokenized_vaults_program {
         withdraw_from_escrow::handler(ctx, amount)
     }
 
+    #[instruction(discriminator = DISC_SWAP_TO_RATIO_RAYDIUM_VAULT_STRATEGY_IX)]
+    pub fn swap_to_ratio_raydium_vault_strategy<'a, 'b, 'c, 'info>(
+        ctx: Context<'a, 'b, 'c, 'info, SwapToRatioRaydiumVaultStrategy<'info>>,
+        strategy_id: u8,
+        token_0_amount_out_min: u64,
+        token_1_amount_out_min: u64,
+    ) -> Result<()>
+    where
+        'c: 'info,
+    {
+        swap_to_ratio_raydium_vault_strategy::handler(
+            ctx,
+            strategy_id,
+            token_0_amount_out_min,
+            token_1_amount_out_min,
+        )
+    }
 }

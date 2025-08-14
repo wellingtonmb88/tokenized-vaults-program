@@ -10,6 +10,8 @@ yarn-error.log
 *wallet.json
 *.env
 *.env.*
+!.env.test.localnet
+!.env.test.devnet
 
 wallet
 *keypair.json

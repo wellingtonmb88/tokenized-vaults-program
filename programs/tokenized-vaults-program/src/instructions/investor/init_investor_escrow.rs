@@ -10,7 +10,7 @@ pub struct InitInvestorEscrow<'info> {
     pub investor: Signer<'info>,
 
     #[account(
-        init,
+        init_if_needed,
         payer = investor,
         space = InvestorEscrow::DISCRIMINATOR.len() + InvestorEscrow::INIT_SPACE,
         seeds = [
@@ -23,7 +23,7 @@ pub struct InitInvestorEscrow<'info> {
     pub investor_escrow: Account<'info, InvestorEscrow>,
 
     #[account(
-        init,
+        init_if_needed,
         payer = investor,
         token::mint = usdc_mint,
         token::authority = investor_escrow,

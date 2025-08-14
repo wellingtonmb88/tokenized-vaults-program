@@ -1,4 +1,8 @@
-use crate::{assert_vault_strategy_percentage, error::TokenizedVaultsErrorCode, DISC_VAULT_STRATEGY_ACCOUNT};
+use std::mem::MaybeUninit;
+
+use crate::{
+    assert_vault_strategy_percentage, error::TokenizedVaultsErrorCode, DISC_VAULT_STRATEGY_ACCOUNT,
+};
 
 use anchor_lang::prelude::*;
 
@@ -19,7 +23,7 @@ pub struct VaultStrategy {
 
 impl VaultStrategy {
     /// The seed used to derive the vault strategy PDA
-    pub const SEED: &str = "vlt_sttg:";
+    pub const SEED: &str = "vlt_strtg:";
 
     pub fn initialize(
         &mut self,
@@ -66,21 +70,5 @@ impl VaultStrategy {
             TokenizedVaultsErrorCode::SharesCalculatedToZero
         );
         Ok(())
-    }
-
-    pub fn signer_seeds(&self) -> &[&[&[u8]]] {
-        let strategy_id_bytes = self.strategy_id.to_le_bytes();
-        let seeds = &[
-            VaultStrategy::SEED.as_bytes(),
-            self.vault_strategy_config_key.as_ref(),
-            self.mint_0.as_ref(),
-            self.mint_1.as_ref(),
-            strategy_id_bytes.as_ref(),
-            &[self.bump],
-        ];
-        let signer_seeds = [&seeds[..]];
-        unsafe {
-            std::slice::from_raw_parts(signer_seeds.as_ptr() as *const &[&[u8]], signer_seeds.len())
-        }
     }
 }

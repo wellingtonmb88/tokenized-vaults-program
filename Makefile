@@ -5,16 +5,29 @@ sync-keys:
 build:
 	anchor build
 
-deploy:
-	anchor deploy
+build-devnet:
+	anchor build -- --features devnet
+
+deploy-devnet:
+	anchor deploy --provider.cluster devnet
+
+deploy-localnet:
+	anchor deploy --provider.cluster localnet
 
 anchor-test-skip:
 	anchor test --skip-local-validator
 
+set-config-localnet:
+	solana config set --url localhost 
+
+set-config-devnet:
+	solana config set --url devnet
 
 start-test-validator-from-dump-mainnet:
 	solana-test-validator \
 	--account HahodTH8xKs75YGSmoRfafZgSFc8ETQrkJ4m2Riu5nh5 ./tests/fixtures/mocked_usdc.json \
+	--account 3HuUDVWtrnREWQ4cJe73zQtzmGFcUvXoQ9muW9hUJYiy ./tests/fixtures/token_a.json \
+	--account 38PUGotm6MA39BU3aVRNB5VufUa9ktmiXTbRWx1A7aQJ ./tests/fixtures/token_b.json \
 	--account 7snxFvjJMkmjqSD95WrjwKQNYzuSdinTyTvnySEpun8a ./tests/fixtures/creator_wsol_ata.json \
 	--account AsmswceAQpVHfQerEPKRNJ6WmmckS2mmFNy5LM6WV8Um ./tests/fixtures/master_wsol_ata.json \
 	--account 7UVimffxr9ow1uXYxsr4LHAcV58mLzhmwaeKvJ1pjLiE ./tests/fixtures/pyth_sol_usd_mainnet.json \
@@ -24,16 +37,63 @@ start-test-validator-from-dump-mainnet:
 	--bpf-program metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s ./tests/fixtures/metadata_program_mainnet.so \
 	--reset
 
-setup-test-env:
-	ts-node ./app/setup.ts
+setup-test-env-localnet:
+	make set-config-localnet
+	solana airdrop 1000 Fpyrsw2o2vCh73ggvJY9QdWfYouhzCs27TwTgxkHFA9n
+	solana airdrop 1000 CrtNgYZaY74eqADuHxCYbQNsh33dBrAbkr71N7YSDoqE
+	export ENV=localnet && ts-node ./app/setup.ts
 
-integration-create_protocol_config_and_vault_strategy_config:
-	yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/integration/init_protocol_config_test.ts
-	yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/integration/init_vault_strategy_config_test.ts
+setup-test-env-devnet:
+	make set-config-devnet
+	export ENV=devnet && ts-node ./app/setup.ts
+
+integration-localnet-create_protocol_config:
+	make set-config-localnet
+	export ENV=localnet && make integration-create_protocol_config
+
+integration-localnet-create_vault_strategy_config:
+	make set-config-localnet
+	export ENV=localnet && make integration-create_vault_strategy_config
+
+integration-localnet-create_raydium_vault_strategy:
+	make set-config-localnet
+	export ENV=localnet && make integration-create_raydium_vault_strategy
+
+integration-localnet-swap_to_ratio_raydium_vault_strategy:
+	make set-config-localnet
+	export ENV=localnet && make integration-swap_to_ratio_raydium_vault_strategy
+
+integration-devnet-create_protocol_config:
+	make set-config-devnet
+	export ENV=devnet && make integration-create_protocol_config
+
+integration-devnet-create_vault_strategy_config:
+	make set-config-devnet
+	export ENV=devnet && make integration-create_vault_strategy_config
+
+integration-devnet-create_raydium_vault_strategy:
+	make set-config-devnet
+	export ENV=devnet && make integration-create_raydium_vault_strategy
+
+integration-devnet-swap_to_ratio_raydium_vault_strategy:
+	make set-config-devnet
+	export ENV=devnet && make integration-swap_to_ratio_raydium_vault_strategy
+
+integration-create_protocol_config: 
+	yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/integration/admin/init_protocol_config_test.ts 
 # 	anchor test --skip-local-validator --run tests/integration/init_protocol_config_test.ts
 # 	anchor test --skip-local-validator --run tests/integration/init_vault_strategy_config_test.ts
 
+integration-create_vault_strategy_config:  
+	yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/integration/creator/init_vault_strategy_config_test.ts 
+
 integration-create_raydium_vault_strategy:
-	make integration-create_protocol_config_and_vault_strategy_config
-# 	anchor test --skip-local-validator --run tests/integration/create_raydium_vault_strategy_test.ts
-	yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/integration/create_raydium_vault_strategy_test.ts
+	yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/integration/creator/create_raydium_vault_strategy_test.ts
+
+integration-swap_to_ratio_raydium_vault_strategy: 
+	yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/integration/investor/swap_to_ratio_raydium_vault_strategy_test.ts
+
+
+# 	solana program dump -u d DRayAUgENGQBKVaX8owNhgzkEDyoHTGVEGHVJT1E9pfH clmm_new_devnet.so 
+# 	solana account -u l --output json-compact --output-file token_a.json 3HuUDVWtrnREWQ4cJe73zQtzmGFcUvXoQ9muW9hUJYiy
+# 	 

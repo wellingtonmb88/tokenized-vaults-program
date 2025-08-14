@@ -35,7 +35,7 @@ export const protocolPDAs = ({
 
   const [vaultStrategyPda] = PublicKey.findProgramAddressSync(
     [
-      Buffer.from("vlt_sttg:"),
+      Buffer.from("vlt_strtg:"),
       vaultStrategyConfigPda.toBuffer(),
       mint0.toBuffer(),
       mint1.toBuffer(),

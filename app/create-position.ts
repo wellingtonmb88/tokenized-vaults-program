@@ -6,13 +6,16 @@ import {
   Raydium,
 } from "@raydium-io/raydium-sdk-v2";
 import BN from "bn.js";
-import { txVersion } from "./config";
+import { setupDotEnv, txVersion } from "./config";
 import Decimal from "decimal.js";
-import { sleep } from './utils';
+import { sleep } from "./utils";
+
+setupDotEnv();
 
 export const createPosition = async (
   raydium: Raydium,
   poolId: string,
+  inputAmount: number,
   retryCount: number = 0
 ) => {
   let poolInfo: ApiV3PoolInfoConcentratedItem;
@@ -34,7 +37,6 @@ export const createPosition = async (
   // const rpcData = await raydium.clmm.getRpcClmmPoolInfo({ poolId: poolInfo.id })
   // poolInfo.price = rpcData.currentPrice
 
-  const inputAmount = 500; // MintA amount
   const [startPrice, endPrice] = [0.0001, 200];
 
   const { tick: lowerTick } = TickUtils.getPriceAndTick({
@@ -116,11 +118,15 @@ export const createPosition = async (
       nft: extInfo.nftMint.toBase58(),
     });
   } catch (error) {
-    console.error("failed to open clmm position, retrying...", retryCount + 1, error);
+    console.error(
+      "failed to open clmm position, retrying...",
+      retryCount + 1,
+      error
+    );
     if (retryCount >= 1) {
       throw new Error("Failed to open clmm position after multiple retries");
     }
-    await sleep(3000);
-    return createPosition(raydium, poolId, retryCount + 1);
+    // await sleep(3000);
+    // return createPosition(raydium, poolId, inputAmount, retryCount + 1);
   }
 };

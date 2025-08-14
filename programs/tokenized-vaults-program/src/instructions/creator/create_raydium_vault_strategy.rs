@@ -2,17 +2,18 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
+    metadata::Metadata,
     token::Token,
     token_interface::{Mint, Token2022, TokenAccount},
 };
 use pyth_solana_receiver_sdk::price_update::PriceUpdateV2;
-use raydium_clmm_cpi::{cpi, program::RaydiumClmm, states::PoolState, ID as RAYDIUM_CLMM_ID};
+use raydium_clmm_cpi::{cpi, program::RaydiumClmm, states::PoolState};
 
 use crate::{
     error::TokenizedVaultsErrorCode,
     state::*,
     utils::{convert_amounts_to_usd, get_price_from_pyth_update},
-    ProtocolStatus, VaultStrategyStatus,
+    ProtocolStatus, VaultStrategyStatus, RAYDIUM_CLMM_ID,
 };
 
 #[derive(Accounts)]
@@ -20,9 +21,6 @@ use crate::{
 pub struct CreateRaydiumVaultStrategy<'info> {
     #[account(mut)]
     pub creator: Signer<'info>,
-
-    #[account(seeds = [ProtocolConfig::SEED.as_bytes()], bump)]
-    pub protocol_config: Box<Account<'info, ProtocolConfig>>,
 
     #[account(
         mut,
@@ -44,7 +42,7 @@ pub struct CreateRaydiumVaultStrategy<'info> {
         ],
         bump
     )]
-    pub vault_strategy: Account<'info, VaultStrategy>,
+    pub vault_strategy: Box<Account<'info, VaultStrategy>>,
 
     #[account(
         init_if_needed,
@@ -57,14 +55,44 @@ pub struct CreateRaydiumVaultStrategy<'info> {
         ],
         bump
     )]
-    pub investor_strategy_position: Account<'info, InvestorStrategyPosition>,
+    pub investor_strategy_position: Box<Account<'info, InvestorStrategyPosition>>,
+
+    /// The escrow account for the token 0
+    /// Vault strategy Config receives token 0 in this account from Raydium Swap
+    #[account(
+        init_if_needed,
+        payer = creator,
+        seeds = [
+            VaultStrategyConfig::VAULT_SWAP_TO_RATIO_0_ESCROW_SEED.as_bytes(),
+            vault_strategy_config.key().as_ref(),
+        ],
+        bump,
+        token::mint = raydium_vault_0_mint,
+        token::authority = vault_strategy_config,
+    )]
+    pub vault_strategy_cfg_mint_0_escrow: Box<InterfaceAccount<'info, TokenAccount>>,
+
+    /// The escrow account for the token 1
+    /// Vault strategy Config receives token 1 in this account from Raydium Swap
+    #[account(
+        init_if_needed,
+        payer = creator,
+        seeds = [
+            VaultStrategyConfig::VAULT_SWAP_TO_RATIO_1_ESCROW_SEED.as_bytes(),
+            vault_strategy_config.key().as_ref(),
+        ],
+        bump,
+        token::mint = raydium_vault_1_mint,
+        token::authority = vault_strategy_config,
+    )]
+    pub vault_strategy_cfg_mint_1_escrow: Box<InterfaceAccount<'info, TokenAccount>>,
 
     /* Pyth Price Feeds */
     /// CHECK: Pyth price update account for token 0
-    pub pyth_token_0_price_update: Account<'info, PriceUpdateV2>,
+    pub pyth_token_0_price_update: Box<Account<'info, PriceUpdateV2>>,
 
     /// CHECK: Pyth price update account for token 1
-    pub pyth_token_1_price_update: Account<'info, PriceUpdateV2>,
+    pub pyth_token_1_price_update: Box<Account<'info, PriceUpdateV2>>,
 
     /* DEX Raydium */
     #[account(address = RAYDIUM_CLMM_ID)]
@@ -80,8 +108,10 @@ pub struct CreateRaydiumVaultStrategy<'info> {
     pub raydium_position_nft_account: UncheckedAccount<'info>,
 
     /// CHECK: Add liquidity for this raydium pool
+    // #[account(mut)]
+    // pub raydium_pool_state: AccountLoader<'info, PoolState>,
     #[account(mut)]
-    pub raydium_pool_state: AccountLoader<'info, PoolState>,
+    pub raydium_pool_state: UncheckedAccount<'info>,
 
     /// CHECK: Store the information of raydium market marking in range
     #[account(mut)]
@@ -100,20 +130,32 @@ pub struct CreateRaydiumVaultStrategy<'info> {
     pub raydium_personal_position: UncheckedAccount<'info>,
 
     /// The token_0 account that will deposit tokens to the raydium pool
+    // #[account(mut)]
+    // pub raydium_token_account_0: Box<InterfaceAccount<'info, TokenAccount>>,
+    /// CHECK: Unchecked account for raydium token account 0
     #[account(mut)]
-    pub raydium_token_account_0: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub raydium_token_account_0: UncheckedAccount<'info>,
 
     /// The token_1 account that will deposit tokens to the raydium pool
+    // #[account(mut)]
+    // pub raydium_token_account_1: Box<InterfaceAccount<'info, TokenAccount>>,
+    /// CHECK: Unchecked account for raydium token account 1
     #[account(mut)]
-    pub raydium_token_account_1: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub raydium_token_account_1: UncheckedAccount<'info>,
 
     /// The address that holds raydium pool tokens for token_0
+    // #[account(mut)]
+    // pub raydium_token_vault_0: Box<InterfaceAccount<'info, TokenAccount>>,
+    /// CHECK: Unchecked account for raydium token vault 0
     #[account(mut)]
-    pub raydium_token_vault_0: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub raydium_token_vault_0: UncheckedAccount<'info>,
 
     /// The address that holds raydium pool tokens for token_1
+    // #[account(mut)]
+    // pub raydium_token_vault_1: Box<InterfaceAccount<'info, TokenAccount>>,
+    /// CHECK: Unchecked account for raydium token vault 1
     #[account(mut)]
-    pub raydium_token_vault_1: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub raydium_token_vault_1: UncheckedAccount<'info>,
 
     /// The mint of raydium token vault 0
     pub raydium_vault_0_mint: Box<InterfaceAccount<'info, Mint>>,
@@ -159,11 +201,6 @@ impl<'a, 'b, 'c: 'info, 'info> CreateRaydiumVaultStrategy<'info> {
         remaining_accounts: &'c [AccountInfo<'info>],
         bump: u8,
     ) -> Result<()> {
-        require!(
-            self.protocol_config.status == ProtocolStatus::Active,
-            TokenizedVaultsErrorCode::ProtocolConfigNotActive
-        );
-
         require!(
             self.vault_strategy_config.status == VaultStrategyStatus::Draft,
             TokenizedVaultsErrorCode::VaultStrategyConfigNotDraft
