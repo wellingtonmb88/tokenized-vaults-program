@@ -63,9 +63,8 @@ describe("swap-to-ratio-raydium-vault-strategy", () => {
 
   let raydium: Raydium;
 
-  before(async () => {
-    // Check if we're on devnet and have sufficient balance
-    console.log("Running tests on devnet");
+  before(async () => { 
+    console.log("Running tests on ", process.env.ENV);
     console.log("Creator address:", creator.publicKey.toString());
     // Check existing balance first
     const creatorBalance = await connection.getBalance(creator.publicKey);
@@ -116,7 +115,6 @@ describe("swap-to-ratio-raydium-vault-strategy", () => {
   it("Swap to Ratio Raydium Vault Strategy", async () => {
     const strategyId = 1;
     const strategyConfigName = VAULT_STRATEGY_CONFIG_NAME;
-    // const NFT = new PublicKey("Fv8fSLGZRvtnYaD8LHrCUR3t4fxdsshy5kUZG3htKe7w");
 
     const {
       mint0,

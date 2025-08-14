@@ -39,7 +39,7 @@ describe("tokenized-vaults-program", () => {
 
   // Airdrop SOL to admin account for pay transactions fees.
   before(async () => {
-    console.log("Running tests on devnet");
+    console.log("Running tests on ", process.env.ENV);
     console.log("Admin address:", admin.publicKey.toString());
 
     const accountInfo = await connection.getAccountInfo(protocolConfigPda);

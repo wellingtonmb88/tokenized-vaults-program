@@ -71,8 +71,7 @@ describe("create-raydium-vault-strategy", () => {
   );
 
   before(async () => {
-    // Check if we're on devnet and have sufficient balance
-    console.log("Running tests on devnet");
+    console.log("Running tests on ", process.env.ENV);
     console.log("Creator address:", creator.publicKey.toString());
     // Check existing balance first
     const creatorBalance = await connection.getBalance(creator.publicKey);
