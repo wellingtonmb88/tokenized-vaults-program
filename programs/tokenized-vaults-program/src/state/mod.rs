@@ -19,3 +19,6 @@ pub use invest_reserve_vault::*;
 
 pub mod constants;
 pub use constants::*;
+
+pub mod raydium_tick_array;
+pub use raydium_tick_array::*;

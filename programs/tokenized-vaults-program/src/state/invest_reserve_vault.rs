@@ -10,6 +10,7 @@ pub struct SwapToRatioVault {
     pub amount_in: u64,
     pub token_0_amount: u64,
     pub token_1_amount: u64,
+    pub executed: bool,
 }
 
 #[derive(Default, Debug, InitSpace)]
@@ -24,10 +25,19 @@ pub struct InvestReserveVault {
 impl InvestReserveVault {
     pub const SEED: &'static str = "invest_reserve_vault:";
 
-    pub fn initialize(&mut self, vault_strategy_config_key: Pubkey, reserved_amount: u64) {
+    pub fn initialize(
+        &mut self,
+        vault_strategy_config_key: Pubkey,
+        reserved_amount: u64,
+    ) -> Result<()> {
+        require!(
+            vault_strategy_config_key != Pubkey::default() && self.swap_to_ratio_vaults.is_empty(),
+            TokenizedVaultsErrorCode::InvestReserveVaultAlreadyInitialized
+        );
         self.vault_strategy_config_key = vault_strategy_config_key;
         self.reserved_amount = reserved_amount;
         self.swap_to_ratio_vaults = Vec::new();
+        Ok(())
     }
 
     pub fn add_swap_to_ratio_vault(&mut self, vault: SwapToRatioVault) -> Result<()> {
@@ -61,11 +71,24 @@ impl InvestReserveVault {
         Ok(())
     }
 
-    pub fn clear_swap_to_ratio_vaults(&mut self) -> Result<()> {
-        require!(
-            !self.swap_to_ratio_vaults.is_empty(),
-            TokenizedVaultsErrorCode::NoSwapToRatioVaultsToClear
-        );
+    pub fn set_swap_to_ratio_executed(
+        &mut self,
+        vault_strategy_key: Pubkey,
+        executed: bool,
+    ) -> Result<()> {
+        if let Some(existing_vault) = self
+            .swap_to_ratio_vaults
+            .iter_mut()
+            .find(|v| v.vault_strategy_key == vault_strategy_key)
+        {
+            existing_vault.executed = executed;
+            Ok(())
+        } else {
+            Err(TokenizedVaultsErrorCode::SwapToRatioVaultNotFound.into())
+        }
+    }
+
+    pub fn clean_up(&mut self) -> Result<()> {
         self.reserved_amount = 0;
         self.swap_to_ratio_vaults.clear();
         Ok(())

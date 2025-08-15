@@ -10,6 +10,8 @@ import {
 import {
   getAssociatedTokenAddressSync,
   getOrCreateAssociatedTokenAccount,
+  mintTo,
+  TOKEN_2022_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import { expect } from "chai";
@@ -20,6 +22,7 @@ import {
 } from "@raydium-io/raydium-sdk-v2";
 import {
   _creatorWallet,
+  _masterWallet,
   connection,
   initSdk,
   setupDotEnv,
@@ -38,6 +41,8 @@ import {
   createLookUpTable,
   getTokenBalanceForOwner,
   transferToken,
+  transferToTokenAccount,
+  customMintToWithATA,
 } from "../../../app/utils";
 import { protocolPDAs } from "../../../app/protocol-pdas";
 import { confirmTransaction } from "@solana-developers/helpers";
@@ -63,7 +68,7 @@ describe("swap-to-ratio-raydium-vault-strategy", () => {
 
   let raydium: Raydium;
 
-  before(async () => { 
+  before(async () => {
     console.log("Running tests on ", process.env.ENV);
     console.log("Creator address:", creator.publicKey.toString());
     // Check existing balance first
@@ -131,13 +136,19 @@ describe("swap-to-ratio-raydium-vault-strategy", () => {
       usdcWithMint1VaultOutput,
       bitmapExtUSDCWithMint0,
       bitmapExtUSDCWithMint1,
-      metadataAccount,
+      bitmapExtMint0WithMint1,
+      tickLowerArrayAddress,
+      tickUpperArrayAddress,
     } = await raydiumPDAs({
       ammConfig: AMM_CONFIG,
       raydium,
       mint0: TokenA,
       mint1: TokenB,
     });
+
+    console.log("bitmapExtMint0WithMint1", bitmapExtMint0WithMint1.toBase58());
+    console.log("bitmapExtUSDCWithMint0", bitmapExtUSDCWithMint0.toBase58());
+    console.log("bitmapExtUSDCWithMint1", bitmapExtUSDCWithMint1.toBase58());
 
     const {
       vaultStrategyConfigPda,
@@ -158,6 +169,17 @@ describe("swap-to-ratio-raydium-vault-strategy", () => {
       investorStrategyPositionPda.toBase58()
     );
 
+    // First, fetch vault strategy to access its properties
+    const vaultStrategyAccount =
+      await program.account.vaultStrategy.fetch(vaultStrategyPda);
+
+    const positionNftAccount = getAssociatedTokenAddressSync(
+      vaultStrategyAccount.dexNftMint,
+      vaultStrategyConfigPda,
+      true, // allowOwnerOffCurve
+      TOKEN_2022_PROGRAM_ID // Only using if using OpenPositionWithToken22Nft
+    );
+
     // const vault_strategy_cfg_usdc_escrow = PublicKey.findProgramAddressSync(
     //   [
     //     Buffer.from("vt_swap_ratio_usdc_escrow:"),
@@ -165,6 +187,23 @@ describe("swap-to-ratio-raydium-vault-strategy", () => {
     //   ],
     //   program.programId
     // );
+    console.log("\nmint0 PDA:", mint0.toBase58());
+    const kk = await getTokenBalanceForOwner(
+      connection as any,
+      mint0,
+      openPositionTokenVault0,
+      true
+    );
+    console.log("Vault 0 Raydium Balance:", kk?.uiAmountString, "\n");
+
+    console.log("\nmint1 PDA:", mint1.toBase58());
+    const ll = await getTokenBalanceForOwner(
+      connection as any,
+      mint1,
+      openPositionTokenVault1,
+      true
+    );
+    console.log("Vault 1 Raydium Balance:", ll?.uiAmountString, "\n");
 
     const vault_strategy_cfg_usdc_escrow =
       await getOrCreateAssociatedTokenAccount(
@@ -178,7 +217,7 @@ describe("swap-to-ratio-raydium-vault-strategy", () => {
         TOKEN_PROGRAM_ID
       );
 
-    const vault_strategy_cfg_mint_0_escrow = PublicKey.findProgramAddressSync(
+    const [vault_strategy_cfg_mint_0_escrow] = PublicKey.findProgramAddressSync(
       [
         Buffer.from("vlt_swap_ratio_0_escrow:"),
         vaultStrategyConfigPda.toBuffer(),
@@ -186,7 +225,7 @@ describe("swap-to-ratio-raydium-vault-strategy", () => {
       program.programId
     );
 
-    const vault_strategy_cfg_mint_1_escrow = PublicKey.findProgramAddressSync(
+    const [vault_strategy_cfg_mint_1_escrow] = PublicKey.findProgramAddressSync(
       [
         Buffer.from("vlt_swap_ratio_1_escrow:"),
         vaultStrategyConfigPda.toBuffer(),
@@ -194,41 +233,19 @@ describe("swap-to-ratio-raydium-vault-strategy", () => {
       program.programId
     );
 
-    // First, fetch vault strategy to access its properties
-    const vaultStrategyAccount =
-      await program.account.vaultStrategy.fetch(vaultStrategyPda);
+    console.log(
+      "vault_strategy_cfg_mint_0_escrow",
+      vault_strategy_cfg_mint_0_escrow.toBase58()
+    );
+    console.log(
+      "vault_strategy_cfg_mint_1_escrow",
+      vault_strategy_cfg_mint_1_escrow.toBase58()
+    );
 
     const [personalPosition] = PublicKey.findProgramAddressSync(
       [Buffer.from("position"), vaultStrategyAccount.dexNftMint.toBuffer()],
       new PublicKey(CLMM_PROGRAM_ID)
     );
-
-    const { lookupTableAccount } = await createLookUpTable({
-      connection: connection as any,
-      payer: creator,
-      authority: creator,
-      reuseTable: new PublicKey("4dNnqCE11LsNAV1tf4qD3uBL4Adr8WYcw3ukB2orF1vw"),
-      addresses: [
-        poolStateMint0WithMint1,
-        protocolPosition,
-        new PublicKey(vault_strategy_cfg_usdc_escrow.address),
-        new PublicKey(vault_strategy_cfg_mint_0_escrow),
-        new PublicKey(vault_strategy_cfg_mint_1_escrow),
-        openPositionTokenVault0,
-        openPositionTokenVault1,
-        mint0,
-        mint1,
-        metadataAccount,
-      ],
-    });
-
-    await transferToken({
-      connection: connection as any,
-      owner: creator,
-      mint: USDC,
-      destination: new PublicKey(vault_strategy_cfg_usdc_escrow.address),
-      amount: 10 * 1e6,
-    });
 
     // First, we need to calculate the amounts that will actually be swapped
     // This matches the logic in the Rust program
@@ -303,10 +320,98 @@ describe("swap-to-ratio-raydium-vault-strategy", () => {
     });
     console.log("minAmountOutB:", minAmountOutB.amount.toSignificant(6));
 
+    const [investReserveVaultPda] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from("invest_reserve_vault:"),
+        creator.publicKey.toBuffer(),
+        vaultStrategyConfigPda.toBuffer(),
+      ],
+      program.programId
+    );
+
+    const [escrow_vaultPda] = PublicKey.findProgramAddressSync(
+      [Buffer.from("escrow_vault:"), creator.publicKey.toBuffer()],
+      program.programId
+    );
+
+    // await transferToTokenAccount({
+    //   connection: connection as any,
+    //   owner: creator,
+    //   mint: USDC,
+    //   destination: new PublicKey(escrow_vaultPda),
+    //   amount: 10 * 1e6,
+    // });
+
+    await customMintToWithATA(
+      provider.connection as any,
+      _masterWallet,
+      creator.publicKey,
+      USDC,
+      100_000
+    );
+
+    const { lookupTableAccount } = await createLookUpTable({
+      connection: connection as any,
+      payer: creator,
+      authority: creator,
+      // reuseTable: new PublicKey("3okz33Qa9DhnyQRoHccgx7zvDs4acYXQarJVVw9kczag"),
+      addresses: [
+        vaultStrategyConfigPda,
+        vaultStrategyPda,
+        investorStrategyPositionPda,
+        investReserveVaultPda,
+
+        poolStateMint0WithMint1,
+        protocolPosition,
+        vault_strategy_cfg_usdc_escrow.address,
+        vault_strategy_cfg_mint_0_escrow,
+        vault_strategy_cfg_mint_1_escrow,
+        openPositionTokenVault0,
+        openPositionTokenVault1,
+        mint0,
+        mint1,
+
+        poolStateMint0WithMint1,
+        personalPosition,
+        poolStateUSDCWithMint0,
+        AMM_CONFIG,
+        poolStateUSDCWithMint1,
+        usdcWithMint0VaultInput,
+        usdcWithMint1VaultInput,
+        usdcWithMint0VaultOutput,
+        usdcWithMint1VaultOutput,
+        USDC,
+        raydiumObservationState0,
+        raydiumObservationState1,
+        positionNftAccount,
+        new PublicKey(tickLowerArrayAddress.toBase58()),
+        new PublicKey(tickUpperArrayAddress.toBase58()),
+        ...remainingAccountsA,
+        ...remainingAccountsB,
+      ],
+    });
+    //cqeAbAoArcL6EuzryNk4dTX344zZr7ovrmQyBi8vzKY
+    remainingAccountsA.forEach((i) => {
+      console.log("remainingAccountsA:", i.toBase58());
+    });
+    remainingAccountsB.forEach((i) => {
+      console.log("remainingAccountsB:", i.toBase58());
+    });
     const minToken0Out = new BN(0);
     const minToken1Out = new BN(0);
     try {
-      const createVaultStrategyIx = await program.methods
+      const investReserveIx = await program.methods
+        .investReserve(new BN(10 * 1e6))
+        .accounts({
+          investor: creator.publicKey,
+          vaultStrategyConfig: vaultStrategyConfigPda,
+          usdcMint: USDC,
+        })
+        .signers([creator])
+        .remainingAccounts([])
+        .instruction();
+
+      const swapToRatioIx = await program.methods
         .swapToRatioRaydiumVaultStrategy(strategyId, minToken0Out, minToken1Out)
         .accounts({
           investor: creator.publicKey,
@@ -326,6 +431,8 @@ describe("swap-to-ratio-raydium-vault-strategy", () => {
           usdcMint: USDC,
           raydiumObservationState0: raydiumObservationState0,
           raydiumObservationState1: raydiumObservationState1,
+          raydiumTokenVault0: openPositionTokenVault0,
+          raydiumTokenVault1: openPositionTokenVault1,
         })
         .signers([creator])
         .remainingAccounts([
@@ -347,6 +454,32 @@ describe("swap-to-ratio-raydium-vault-strategy", () => {
         ])
         .instruction();
 
+      const addLiquidityIx = await program.methods
+        .addLiquidityRaydiumVaultStrategy(strategyId)
+        .accounts({
+          investor: creator.publicKey,
+          vaultStrategyConfig: vaultStrategyConfigPda,
+          raydiumPositionNftAccount: positionNftAccount,
+          raydiumPoolState: poolStateMint0WithMint1,
+          raydiumPersonalPosition: personalPosition,
+          raydiumProtocolPosition: protocolPosition,
+          raydiumTickArrayLower: tickLowerArrayAddress.toBase58(),
+          raydiumTickArrayUpper: tickUpperArrayAddress.toBase58(),
+          raydiumTokenVault0: openPositionTokenVault0,
+          raydiumTokenVault1: openPositionTokenVault1,
+          raydiumVault0Mint: mint0,
+          raydiumVault1Mint: mint1,
+        })
+        .signers([creator])
+        .remainingAccounts([
+          {
+            pubkey: bitmapExtMint0WithMint1,
+            isSigner: false,
+            isWritable: true,
+          },
+        ])
+        .instruction();
+
       const latestBlockhash = await provider.connection.getLatestBlockhash();
 
       const txMessage = new anchor.web3.TransactionMessage({
@@ -354,8 +487,10 @@ describe("swap-to-ratio-raydium-vault-strategy", () => {
         recentBlockhash: latestBlockhash.blockhash,
         instructions: [
           ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 100 }),
-          ComputeBudgetProgram.setComputeUnitLimit({ units: 700_000 }),
-          createVaultStrategyIx,
+          ComputeBudgetProgram.setComputeUnitLimit({ units: 1_000_000 }),
+          investReserveIx,
+          swapToRatioIx,
+          addLiquidityIx,
         ],
       }).compileToV0Message([lookupTableAccount]);
 
@@ -372,7 +507,7 @@ describe("swap-to-ratio-raydium-vault-strategy", () => {
       await confirmTransaction(connection as any, txSignature, "finalized");
 
       console.log(
-        "\n Vault strategy created with Pyth integration:",
+        "\n Transaction signature:",
         txSignature
       );
 

@@ -40,7 +40,7 @@ import {
 import Decimal from "decimal.js";
 import { getSimulationComputeUnits } from "@solana-developers/helpers";
 import { createPosition } from "./create-position";
-import { airdrop, sleep } from "./utils";
+import { airdrop, customMintToWithATA, sleep } from "./utils";
 import { CLMM_PROGRAM_ID, TokenA, TokenB, USDC } from "./constants";
 import { AnchorProvider, Wallet } from "@coral-xyz/anchor";
 
@@ -98,35 +98,35 @@ const run = async () => {
   // });
 
   console.log("\nMinting token A", TokenA.toBase58());
-  await _mintTo(
+  await customMintToWithATA(
     provider.connection as any,
     masterWallet,
     masterWallet.publicKey,
     TokenA,
-    100_000
+    1000_000
   );
-  await _mintTo(
+  await customMintToWithATA(
     provider.connection as any,
     masterWallet,
     creatorWallet.publicKey,
     TokenA,
-    100_000
-  );  
+    1000_000
+  );
 
   console.log("\nMinting token B", TokenB.toBase58());
-  await _mintTo(
+  await customMintToWithATA(
     provider.connection as any,
     masterWallet,
     masterWallet.publicKey,
     TokenB,
-    100_000
+    1000_000
   );
-  await _mintTo(
+  await customMintToWithATA(
     provider.connection as any,
     masterWallet,
     creatorWallet.publicKey,
     TokenB,
-    100_000
+    1000_000
   );
 
   const tokenArray = [TokenA, TokenB];
@@ -140,22 +140,21 @@ const run = async () => {
   const sortedMint1 = tokenArray[1];
 
   if (process.env.ENV !== "devnet") {
-
-  // console.log("\nMinting token USDC", USDC.toBase58());
-  await _mintTo(
-    provider.connection as any,
-    masterWallet,
-    masterWallet.publicKey,
-    USDC,
-    100_000
-  );
-  await _mintTo(
-    provider.connection as any,
-    masterWallet,
-    creatorWallet.publicKey,
-    USDC,
-    100_000
-  );
+    // console.log("\nMinting token USDC", USDC.toBase58());
+    await customMintToWithATA(
+      provider.connection as any,
+      masterWallet,
+      masterWallet.publicKey,
+      USDC,
+      100_000
+    );
+    await customMintToWithATA(
+      provider.connection as any,
+      masterWallet,
+      creatorWallet.publicKey,
+      USDC,
+      100_000
+    );
 
     const poolIdA = await createPool(
       raydium,
@@ -176,18 +175,29 @@ const run = async () => {
     ); //// mintA - mintB
 
     console.log("Creating position for Pool ");
-    const inputAmount = 5; // MintA amount
+    const inputAmount = 50000; // MintA amount
     // await createPosition(raydium, poolIdA, inputAmount).catch(console.error);
     // await createPosition(raydium, poolIdB, inputAmount).catch(console.error);
     // await createPosition(raydium, poolIdC, inputAmount).catch(console.error);
-    await createPosition(raydium, "CTBsu4QkD6XpCfQMbkTXfYRXu6tmT8K1J9nUFbHdsL4c", inputAmount).catch(console.error);
-    await createPosition(raydium, "BYsxZtgTDuq3ACvQSoDwVXzoCc4NEyc6JZYc4PMLEGrC", inputAmount).catch(console.error);
-    await createPosition(raydium, "6WZxvb9wgVGWf8QqT5mYErvB5wR2Kz17JLn45WCMTm5P", inputAmount).catch(console.error);
+    // await createPosition(raydium, "CTBsu4QkD6XpCfQMbkTXfYRXu6tmT8K1J9nUFbHdsL4c", inputAmount).catch(console.error);
+    // await createPosition(raydium, "BYsxZtgTDuq3ACvQSoDwVXzoCc4NEyc6JZYc4PMLEGrC", inputAmount).catch(console.error);
+    await createPosition(
+      raydium,
+      "6WZxvb9wgVGWf8QqT5mYErvB5wR2Kz17JLn45WCMTm5P",
+      inputAmount
+    ).catch(console.error);
   } else {
-
     const inputAmount = 5; // MintA amount
-    await createPosition(raydium, "Fm4ByxNKoPcVbm37hKzVcNfuDpfMzcsjt58KstSc6vdU", inputAmount).catch(console.error);
-    await createPosition(raydium, "71XkvPSrY4g4gQU2afowkbEkAFLKeicDTr5hXAA9h8Dh", inputAmount).catch(console.error);
+    await createPosition(
+      raydium,
+      "Fm4ByxNKoPcVbm37hKzVcNfuDpfMzcsjt58KstSc6vdU",
+      inputAmount
+    ).catch(console.error);
+    await createPosition(
+      raydium,
+      "71XkvPSrY4g4gQU2afowkbEkAFLKeicDTr5hXAA9h8Dh",
+      inputAmount
+    ).catch(console.error);
   }
   console.log("done");
   process.exit();
@@ -324,45 +334,6 @@ const _createMintTo = async (
     }
   );
 
-  return mint;
-};
-
-const _mintTo = async (
-  connection: Connection,
-  authority: Keypair,
-  to: PublicKey,
-  mint: PublicKey,
-  amount: number
-): Promise<PublicKey> => {
-  const toAta = await getOrCreateAssociatedTokenAccount(
-    connection,
-    authority,
-    mint,
-    to,
-    false,
-    "confirmed"
-  );
-  await sleep(1000);
-
-  const mintAmount = amount * LAMPORTS_PER_SOL;
-  console.log("minting...", {
-    mint: mint.toBase58(),
-    amount: mintAmount,
-    to: toAta.address.toBase58(),
-  });
-  const tx = await mintTo(
-    connection,
-    authority,
-    mint,
-    toAta.address,
-    authority.publicKey,
-    mintAmount,
-    undefined,
-    {
-      commitment: "confirmed",
-    }
-  );
-  console.log("mintTo tx:", tx);
   return mint;
 };
 

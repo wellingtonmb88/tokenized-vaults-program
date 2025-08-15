@@ -30,6 +30,10 @@ impl VaultStrategyConfig {
     pub const VAULT_SWAP_TO_RATIO_USDC_ESCROW_SEED: &str = "vlt_swap_ratio_usdc_escrow:";
     pub const VAULT_SWAP_TO_RATIO_0_ESCROW_SEED: &str = "vlt_swap_ratio_0_escrow:";
     pub const VAULT_SWAP_TO_RATIO_1_ESCROW_SEED: &str = "vlt_swap_ratio_1_escrow:";
+    pub const VAULT_FEES_0_ESCROW_SEED: &str = "vlt_fees_0_escrow:";
+    pub const VAULT_FEES_1_ESCROW_SEED: &str = "vlt_fees_1_escrow:";
+    pub const VAULT_PERF_FEES_0_ESCROW_SEED: &str = "vlt_perf_fees_0_escrow:";
+    pub const VAULT_PERF_FEES_1_ESCROW_SEED: &str = "vlt_perf_fees_1_escrow:";
 
     pub fn initialize(
         &mut self,

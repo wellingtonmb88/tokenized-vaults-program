@@ -11,6 +11,7 @@ name = "tokenized_vaults_program"
 [features]
 default = []
 devnet = ["raydium-clmm-cpi/devnet"]
+localnet = []
 cpi = ["no-entrypoint"]
 no-entrypoint = []
 no-idl = []

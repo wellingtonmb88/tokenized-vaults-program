@@ -95,11 +95,6 @@ pub mod tokenized_vaults_program {
         )
     }
 
-    #[instruction(discriminator = DISC_INIT_INVESTOR_ESCROW_IX)]
-    pub fn init_investor_escrow(ctx: Context<InitInvestorEscrow>) -> Result<()> {
-        init_investor_escrow::handler(ctx)
-    }
-
     #[instruction(discriminator = DISC_DEPOSIT_TO_ESCROW_IX)]
     pub fn deposit_to_escrow(ctx: Context<DepositToEscrow>, amount: u64) -> Result<()> {
         deposit_to_escrow::handler(ctx, amount)
@@ -133,5 +128,14 @@ pub mod tokenized_vaults_program {
         )
     }
 
-    
+    #[instruction(discriminator = DISC_ADD_LIQUIDITY_RAYDIUM_VAULT_STRATEGY_IX)]
+    pub fn add_liquidity_raydium_vault_strategy<'a, 'b, 'c, 'info>(
+        ctx: Context<'a, 'b, 'c, 'info, AddLiquidityRaydiumVaultStrategy<'info>>,
+        strategy_id: u8,
+    ) -> Result<()>
+    where
+        'c: 'info,
+    {
+        add_liquidity_raydium_vault_strategy::handler(ctx, strategy_id)
+    }
 }

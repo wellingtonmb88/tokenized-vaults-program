@@ -5,6 +5,7 @@ import {
   POOL_TICK_ARRAY_BITMAP_SEED,
 } from "@raydium-io/raydium-sdk-v2";
 import {
+  Connection,
   Keypair,
   LAMPORTS_PER_SOL,
   PublicKey,
@@ -24,6 +25,7 @@ import {
   getAssociatedTokenAddress,
   getMinimumBalanceForRentExemptAccount,
   getOrCreateAssociatedTokenAccount,
+  mintTo,
   NATIVE_MINT,
   TOKEN_2022_PROGRAM_ID,
 } from "@solana/spl-token";
@@ -351,16 +353,17 @@ export const transferToken = async ({
 export const getTokenBalanceForOwner = async (
   connection: anchor.web3.Connection,
   mint: PublicKey,
-  owner: PublicKey
+  owner: PublicKey,
+  allowOwnerOffCurve?: boolean
 ) => {
   try {
     // Get the associated token account address
-    const ata = await getAssociatedTokenAddress(mint, owner);
+    // const ata = await getAssociatedTokenAddress(mint, owner, allowOwnerOffCurve);
 
     // Get the balance
-    const balance = await connection.getTokenAccountBalance(ata);
+    const balance = await connection.getTokenAccountBalance(owner);
     return {
-      ata: ata.toBase58(),
+      ata: owner.toBase58(),
       amount: balance.value.amount,
       decimals: balance.value.decimals,
       uiAmount: balance.value.uiAmount,
@@ -394,4 +397,45 @@ export const fetchTokenAccountData = async (
     },
   });
   return tokenAccountData;
+};
+
+
+export const customMintToWithATA = async (
+  connection: Connection,
+  authority: Keypair,
+  to: PublicKey,
+  mint: PublicKey,
+  amount: number,
+  
+): Promise<PublicKey> => {
+  const toAta = await getOrCreateAssociatedTokenAccount(
+    connection,
+    authority,
+    mint,
+    to,
+    false,
+    "confirmed"
+  );
+  await sleep(1000);
+
+  const mintAmount = amount * LAMPORTS_PER_SOL;
+  console.log("minting...", {
+    mint: mint.toBase58(),
+    amount: mintAmount,
+    to: toAta.address.toBase58(),
+  });
+  const tx = await mintTo(
+    connection,
+    authority,
+    mint,
+    toAta.address,
+    authority.publicKey,
+    mintAmount,
+    undefined,
+    {
+      commitment: "confirmed",
+    }
+  );
+  console.log("mintTo tx:", tx);
+  return mint;
 };

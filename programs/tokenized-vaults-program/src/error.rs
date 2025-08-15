@@ -130,4 +130,10 @@ pub enum TokenizedVaultsErrorCode {
 
     #[msg("Invalid allocation - total does not match reserved amount")]
     InvalidAllocation,
+
+    #[msg("SwapToRatioVault not found")]
+    SwapToRatioVaultNotFound,
+
+    #[msg("InvestReserveVault already initialized")]
+    InvestReserveVaultAlreadyInitialized
 }

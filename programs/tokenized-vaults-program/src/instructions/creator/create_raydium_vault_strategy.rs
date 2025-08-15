@@ -87,6 +87,66 @@ pub struct CreateRaydiumVaultStrategy<'info> {
     )]
     pub vault_strategy_cfg_mint_1_escrow: Box<InterfaceAccount<'info, TokenAccount>>,
 
+    /// The escrow account for the token 0
+    /// Vault strategy Config receives token 0 in this account from Raydium Swap
+    #[account(
+        init_if_needed,
+        payer = creator,
+        seeds = [ 
+            VaultStrategyConfig::VAULT_FEES_0_ESCROW_SEED.as_bytes(),
+            vault_strategy_config.key().as_ref(),
+        ],
+        bump,
+        token::mint = raydium_vault_0_mint,
+        token::authority = vault_strategy_config,
+    )]
+    pub vault_strategy_cfg_mint_0_fees_escrow: Box<InterfaceAccount<'info, TokenAccount>>,
+
+    /// The escrow account for the token 1
+    /// Vault strategy Config receives token 1 in this account from Raydium Swap
+    #[account(
+        init_if_needed,
+        payer = creator,
+        seeds = [ 
+            VaultStrategyConfig::VAULT_FEES_1_ESCROW_SEED.as_bytes(),
+            vault_strategy_config.key().as_ref(),
+        ],
+        bump,
+        token::mint = raydium_vault_1_mint,
+        token::authority = vault_strategy_config,
+    )]
+    pub vault_strategy_cfg_mint_1_fees_escrow: Box<InterfaceAccount<'info, TokenAccount>>,
+
+    /// The escrow account for the token 0
+    /// Vault strategy Config receives token 0 in this account from Raydium Swap
+    #[account(
+        init_if_needed,
+        payer = creator,
+        seeds = [ 
+            VaultStrategyConfig::VAULT_PERF_FEES_0_ESCROW_SEED.as_bytes(),
+            vault_strategy_config.key().as_ref(),
+        ],
+        bump,
+        token::mint = raydium_vault_0_mint,
+        token::authority = vault_strategy_config,
+    )]
+    pub vault_strategy_cfg_mint_0_perf_fees_escrow: Box<InterfaceAccount<'info, TokenAccount>>,
+
+    /// The escrow account for the token 1
+    /// Vault strategy Config receives token 1 in this account from Raydium Swap
+    #[account(
+        init_if_needed,
+        payer = creator,
+        seeds = [ 
+            VaultStrategyConfig::VAULT_PERF_FEES_1_ESCROW_SEED.as_bytes(),
+            vault_strategy_config.key().as_ref(),
+        ],
+        bump,
+        token::mint = raydium_vault_1_mint,
+        token::authority = vault_strategy_config,
+    )]
+    pub vault_strategy_cfg_mint_1_perf_fees_escrow: Box<InterfaceAccount<'info, TokenAccount>>,
+
     /* Pyth Price Feeds */
     /// CHECK: Pyth price update account for token 0
     pub pyth_token_0_price_update: Box<Account<'info, PriceUpdateV2>>,
@@ -268,7 +328,7 @@ impl<'a, 'b, 'c: 'info, 'info> CreateRaydiumVaultStrategy<'info> {
             bump,
         )?;
 
-        msg!("Vault strategy created successfully with USDC conversion");
+        msg!("Vault strategy created successfully");
 
         Ok(())
     }
@@ -311,7 +371,7 @@ impl<'a, 'b, 'c: 'info, 'info> CreateRaydiumVaultStrategy<'info> {
     ) -> Result<()> {
         let cpi_accounts = cpi::accounts::OpenPositionWithToken22Nft {
             payer: self.creator.to_account_info(),
-            position_nft_owner: self.vault_strategy.to_account_info(),
+            position_nft_owner: self.vault_strategy_config.to_account_info(),
             position_nft_mint: self.raydium_position_nft_mint.to_account_info(),
             position_nft_account: self.raydium_position_nft_account.to_account_info(),
             pool_state: self.raydium_pool_state.to_account_info(),
