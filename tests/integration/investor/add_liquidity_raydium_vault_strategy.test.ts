@@ -362,6 +362,7 @@ describe("add-liquidity-raydium-vault-strategy", () => {
       connection: connection as any,
       payer: creator,
       authority: creator,
+        // reuseTable: vaultStrategyAccount.lookUpTable,
       // reuseTable: new PublicKey("3okz33Qa9DhnyQRoHccgx7zvDs4acYXQarJVVw9kczag"),
       addresses: [
         investReserveVaultPda,
@@ -376,11 +377,8 @@ describe("add-liquidity-raydium-vault-strategy", () => {
         usdcWithMint1VaultInput,
         usdcWithMint0VaultOutput,
         usdcWithMint1VaultOutput,
-        USDC,
         raydiumObservationState0,
         raydiumObservationState1,
-        new PublicKey(tickLowerArrayAddress.toBase58()),
-        new PublicKey(tickUpperArrayAddress.toBase58()),
         ...remainingAccountsA,
         ...remainingAccountsB,
       ],
@@ -523,23 +521,31 @@ describe("add-liquidity-raydium-vault-strategy", () => {
       expect(
         investReserveVaultAccount.vaultStrategyConfigKey.toBase58()
       ).to.equal(vaultStrategyConfigPda.toBase58());
-      expect(investReserveVaultAccount.reservedAmount.toNumber()).to.equal(
-        0
-      );
+      expect(investReserveVaultAccount.reservedAmount.toNumber()).to.equal(0);
       expect(investReserveVaultAccount.swapToRatioVaults.length).to.equal(0);
 
-      // expect(
-      //   investReserveVaultAccount.swapToRatioVaults[0].vaultStrategyKey.toBase58()
-      // ).to.equal(vaultStrategyPda.toBase58());
-      // expect(
-      //   investReserveVaultAccount.swapToRatioVaults[0].amountIn.toNumber()
-      // ).to.equal(2500000);
-      // expect(
-      //   investReserveVaultAccount.swapToRatioVaults[0].token0Amount.toNumber()
-      // ).to.greaterThan(1);
-      // expect(
-      //   investReserveVaultAccount.swapToRatioVaults[0].token1Amount.toNumber()
-      // ).to.greaterThan(1);
+      const investorStrategyPositionAccount =
+        await program.account.investorStrategyPosition.fetch(
+          investorStrategyPositionPda
+        );
+      expect(investorStrategyPositionAccount.authority.toString()).to.equal(
+        creator.publicKey.toString()
+      );
+      expect(
+        investorStrategyPositionAccount.vaultStrategyKey.toString()
+      ).to.equal(vaultStrategyPda.toString());
+      expect(investorStrategyPositionAccount.shares.toNumber()).to.equal(
+        184561723
+      );
+      expect(investorStrategyPositionAccount.assets.toNumber()).to.equal(
+        184561723
+      );
+
+      const vaultStrategyAccount =
+        await program.account.vaultStrategy.fetch(vaultStrategyPda);
+
+      expect(vaultStrategyAccount.totalAssets.toNumber()).to.equal(184561723);
+      expect(vaultStrategyAccount.totalShares.toNumber()).to.equal(184561723);
     } catch (error) {
       console.error("Error adding liquidity:", error);
       throw error;

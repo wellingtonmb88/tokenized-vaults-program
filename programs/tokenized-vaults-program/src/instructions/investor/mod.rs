@@ -14,3 +14,6 @@ pub use invest_reserve::*;
 
 pub mod add_liquidity_raydium_vault_strategy;
 pub use add_liquidity_raydium_vault_strategy::*;
+
+pub mod remove_liquidity_raydium_vault_strategy;
+pub use remove_liquidity_raydium_vault_strategy::*;

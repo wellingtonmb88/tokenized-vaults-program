@@ -90,7 +90,7 @@ pub fn convert_amounts_to_usd(
 pub fn transfer_token<'info>(
     from: &InterfaceAccount<'info, TokenAccount>,
     to: &InterfaceAccount<'info, TokenAccount>,
-    amount: &u64,
+    amount: u64,
     mint: &InterfaceAccount<'info, Mint>,
     authority: &AccountInfo<'info>,
     token_program: &Program<'info, Token>,
@@ -108,9 +108,9 @@ pub fn transfer_token<'info>(
     if let Some(seeds) = signer_seeds {
         let seeds_slice = seeds;
         cpi_context = cpi_context.with_signer(seeds_slice);
-        transfer_checked(cpi_context, *amount, mint.decimals)
+        transfer_checked(cpi_context, amount, mint.decimals)
     } else {
-        transfer_checked(cpi_context, *amount, mint.decimals)
+        transfer_checked(cpi_context, amount, mint.decimals)
     }
 }
 

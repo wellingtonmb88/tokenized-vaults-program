@@ -1,6 +1,8 @@
 use anchor_lang::prelude::*;
 
-use crate::{error::TokenizedVaultsErrorCode, DISC_INVESTOR_STR_POS_ACCOUNT};
+use crate::{
+    error::TokenizedVaultsErrorCode, DENOMINATOR_MULTIPLIER, DISC_INVESTOR_STR_POS_ACCOUNT,
+};
 
 #[derive(Default, Debug, InitSpace)]
 #[account(discriminator = DISC_INVESTOR_STR_POS_ACCOUNT)]
@@ -39,8 +41,15 @@ impl InvestorStrategyPosition {
         total_vault_assets: u64,
         total_vault_shares: u64,
     ) -> Result<()> {
-        self.shares =
-            self.convert_assets_to_shares(assets, total_vault_assets, total_vault_shares)?;
+        self.shares = self.shares.saturating_add(self.convert_assets_to_shares(
+            assets,
+            total_vault_assets,
+            total_vault_shares,
+        )?);
+        require!(
+            self.shares > 0,
+            TokenizedVaultsErrorCode::SharesCalculatedToZero
+        );
         self.assets = self.assets.saturating_add(assets);
         require!(
             self.assets > 0,
@@ -50,13 +59,51 @@ impl InvestorStrategyPosition {
         emit!(InvestorStrategyPositionEvent {
             authority: self.authority,
             vault_strategy_key: self.vault_strategy_key,
-            shares: total_vault_shares,
-            assets: total_vault_assets,
+            shares: self.shares,
+            assets: self.assets,
         });
         Ok(())
     }
 
-    fn convert_assets_to_shares(
+    pub fn remove_shares(
+        &mut self,
+        shares: u64,
+        total_vault_assets: u64,
+        total_vault_shares: u64,
+    ) -> Result<()> {
+        self.shares = self.shares.saturating_sub(shares);
+        self.assets = self.assets.saturating_sub(self.convert_shares_to_assets(
+            shares,
+            total_vault_assets,
+            total_vault_shares,
+        )?);
+
+        emit!(InvestorStrategyPositionEvent {
+            authority: self.authority,
+            vault_strategy_key: self.vault_strategy_key,
+            shares: self.shares,
+            assets: self.assets,
+        });
+        Ok(())
+    }
+
+    /// Convert shares to percentage is 1e9 precision,
+    /// ex: 10 shares in 100 total shares = 10 * 1e9 / 100 = 100_000_000 = 100_000_000/1e9 = 0.1 = 10%
+    /// returns an error if the calculation overflows
+    pub fn convert_shares_to_percentage(&self, total_vault_shares: u64) -> Result<u64> {
+        if total_vault_shares == 0 {
+            Ok(0)
+        } else {
+            let percentage = (self.shares as u128)
+                .checked_mul(DENOMINATOR_MULTIPLIER as u128)
+                .ok_or(TokenizedVaultsErrorCode::MathOverflow)?
+                .checked_div(total_vault_shares as u128)
+                .ok_or(TokenizedVaultsErrorCode::MathOverflow)?;
+            Ok(percentage as u64)
+        }
+    }
+
+    pub fn convert_assets_to_shares(
         &self,
         assets: u64,
         total_vault_assets: u64,
@@ -76,57 +123,32 @@ impl InvestorStrategyPosition {
 
         require!(shares > 0, TokenizedVaultsErrorCode::SharesCalculatedToZero);
 
-        emit!(InvestorStrategyPositionEvent {
-            authority: self.authority,
-            vault_strategy_key: self.vault_strategy_key,
-            shares: total_vault_shares,
-            assets: total_vault_assets,
-        });
         Ok(shares as u64)
     }
 
-    // / Convert shares to percentage is 1e9 precision,
-    // / ex: 10 share in 100 total shares = 10 * 1e9 / 100 = 100_000_000 = 100_000_000/1e9 = 0.1 = 10%
-    // / returns an error if the calculation overflows
-    // fn convert_shares_to_percentage(&self, total_vault_shares: u64) -> Result<u64> {
-    //     if total_vault_shares == 0 {
-    //         Ok(0)
-    //     } else {
-    //         let precision = 10u128
-    //             .checked_pow(9)
-    //             .ok_or(TokenizedVaultsErrorCode::MathOverflow)?;
-    //         let percentage = (self.shares as u128)
-    //             .checked_mul(precision)
-    //             .ok_or(TokenizedVaultsErrorCode::MathOverflow)?
-    //             .checked_div(total_vault_shares as u128)
-    //             .ok_or(TokenizedVaultsErrorCode::MathOverflow)?;
-    //         Ok(percentage as u64)
-    //     }
-    // }
+    pub fn convert_shares_to_assets(
+        &self,
+        shares: u64,
+        total_vault_assets: u64,
+        total_vault_shares: u64,
+    ) -> Result<u64> {
+        if self.shares == 0 {
+            Ok(0)
+        } else {
+            require!(
+                self.shares >= shares,
+                TokenizedVaultsErrorCode::InsufficientShares
+            );
+            // assets = (shares_resgatadas * total_assets) / total_shares
+            let assets = (shares as u128)
+                .checked_mul(total_vault_assets as u128)
+                .ok_or(TokenizedVaultsErrorCode::MathOverflow)?
+                .checked_div(total_vault_shares as u128)
+                .ok_or(TokenizedVaultsErrorCode::MathOverflow)?;
 
-    // fn convert_shares_to_assets(
-    //     &self,
-    //     shares: u64,
-    //     total_vault_assets: u64,
-    //     total_vault_shares: u64,
-    // ) -> Result<u64> {
-    //     if self.shares == 0 {
-    //         Ok(0)
-    //     } else {
-    //         require!(
-    //             self.shares >= shares,
-    //             TokenizedVaultsErrorCode::InsufficientShares
-    //         );
-    //         // assets = (shares_resgatadas * total_assets) / total_shares
-    //         let assets = (shares as u128)
-    //             .checked_mul(total_vault_assets as u128)
-    //             .ok_or(TokenizedVaultsErrorCode::MathOverflow)?
-    //             .checked_div(total_vault_shares as u128)
-    //             .ok_or(TokenizedVaultsErrorCode::MathOverflow)?;
-
-    //         Ok(assets as u64)
-    //     }
-    // }
+            Ok(assets as u64)
+        }
+    }
 }
 
 #[event]

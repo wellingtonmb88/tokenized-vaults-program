@@ -327,7 +327,7 @@ impl<'info> SwapToRatioRaydiumVaultStrategy<'info> {
             transfer_token(
                 &self.vault_strategy_cfg_usdc_escrow,
                 &self.vault_strategy_cfg_mint_0_escrow,
-                &amount_in,
+                amount_in,
                 &self.usdc_mint,
                 &self.vault_strategy_config.to_account_info(),
                 &self.token_program,
@@ -408,7 +408,7 @@ impl<'info> SwapToRatioRaydiumVaultStrategy<'info> {
             transfer_token(
                 &self.vault_strategy_cfg_usdc_escrow,
                 &self.vault_strategy_cfg_mint_1_escrow,
-                &amount_in,
+                amount_in,
                 &self.usdc_mint,
                 &self.vault_strategy_config.to_account_info(),
                 &self.token_program,

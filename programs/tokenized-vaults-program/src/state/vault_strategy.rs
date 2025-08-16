@@ -45,8 +45,8 @@ impl VaultStrategy {
 
         assert_vault_strategy_percentage(percentage)?;
 
-        self.update_assets(assets)?;
-        self.update_shares(shares)?;
+        self.add_assets(assets)?;
+        self.add_shares(shares)?;
 
         self.set_inner(
             creator,
@@ -99,7 +99,7 @@ impl VaultStrategy {
         Ok(())
     }
 
-    pub fn update_assets(&mut self, assets: u64) -> Result<()> {
+    pub fn add_assets(&mut self, assets: u64) -> Result<()> {
         self.total_assets = self.total_assets.saturating_add(assets);
         require!(
             self.total_assets > 0,
@@ -115,12 +115,34 @@ impl VaultStrategy {
         Ok(())
     }
 
-    pub fn update_shares(&mut self, shares: u64) -> Result<()> {
+    pub fn add_shares(&mut self, shares: u64) -> Result<()> {
         self.total_shares = self.total_shares.saturating_add(shares);
         require!(
             self.total_shares > 0,
             TokenizedVaultsErrorCode::SharesCalculatedToZero
         );
+        emit!(VaultStrategyUpdateShareEvent {
+            creator: self.creator,
+            vault_strategy_config_key: self.vault_strategy_config_key,
+            shares: self.total_shares,
+            strategy_id: self.strategy_id
+        });
+        Ok(())
+    }
+
+    pub fn remove_assets(&mut self, assets: u64) -> Result<()> {
+        self.total_assets = self.total_assets.saturating_sub(assets);
+        emit!(VaultStrategyUpdateAssetsEvent {
+            creator: self.creator,
+            vault_strategy_config_key: self.vault_strategy_config_key,
+            assets: self.total_assets,
+            strategy_id: self.strategy_id
+        });
+        Ok(())
+    }
+
+    pub fn remove_shares(&mut self, shares: u64) -> Result<()> {
+        self.total_shares = self.total_shares.saturating_sub(shares);
         emit!(VaultStrategyUpdateShareEvent {
             creator: self.creator,
             vault_strategy_config_key: self.vault_strategy_config_key,

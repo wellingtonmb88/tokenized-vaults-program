@@ -9,11 +9,11 @@ pub const LOW_FEES: u32 = 0; // 0
 /// High fee for transaction: 10%
 pub const HIGH_FEES: u32 = 10u32 * BPS; // 100_000
 
-/// High performance fee: 100%
-pub const HIGH_PERFORMANCE_FEE: u32 = 100u32 * BPS; // 1_000_000
+/// Max performance fee: 100%
+pub const MAX_PERFORMANCE_FEE: u32 = 100u32 * BPS; // 1_000_000
 
-/// Low performance fee: 10%
-pub const LOW_PERFORMANCE_FEE: u32 = 10u32 * BPS; // 100_000
+/// Min performance fee: 10%
+pub const MIN_PERFORMANCE_FEE: u32 = 10u32 * BPS; // 100_000
 
 /// USDC mint address - conditional based on network
 /// Devnet: Test token that can be minted for testing (We can change this to anything we want to send to our wallets)
@@ -54,5 +54,11 @@ pub const DISC_UNPAUSE_VAULT_IX: &[u8] = &[8];
 pub const DISC_INVEST_RESERVE_IX: &[u8] = &[9];
 pub const DISC_SWAP_TO_RATIO_RAYDIUM_VAULT_STRATEGY_IX: &[u8] = &[10];
 pub const DISC_ADD_LIQUIDITY_RAYDIUM_VAULT_STRATEGY_IX: &[u8] = &[11];
+pub const DISC_REMOVE_LIQUIDITY_RAYDIUM_VAULT_STRATEGY_IX: &[u8] = &[12];
 
 pub const DENOMINATOR_MULTIPLIER: u64 = 1_000_000_000;
+
+/// Max remove percentage: 100% (100 * 1e9)
+pub const MAX_REMOVE_PERCENTAGE: u64 = 100 * DENOMINATOR_MULTIPLIER;
+/// Min remove percentage: 10% (10 * 1e9)
+pub const MIN_REMOVE_PERCENTAGE: u64 = 10 * DENOMINATOR_MULTIPLIER;

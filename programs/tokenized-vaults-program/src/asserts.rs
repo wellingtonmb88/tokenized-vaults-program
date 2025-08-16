@@ -2,8 +2,8 @@ use anchor_lang::prelude::*;
 use anchor_lang::require;
 
 use crate::{
-    error::TokenizedVaultsErrorCode, VaultStrategyType, HIGH_PERFORMANCE_FEE, LOW_PERFORMANCE_FEE,
-    MAX_PERCENTAGE, MIN_PERCENTAGE,
+    error::TokenizedVaultsErrorCode, VaultStrategyType, MAX_PERCENTAGE, MAX_PERFORMANCE_FEE,
+    MIN_PERCENTAGE, MIN_PERFORMANCE_FEE,
 };
 
 pub fn assert_vault_strategy_name(name: &str) -> Result<()> {
@@ -16,11 +16,11 @@ pub fn assert_vault_strategy_name(name: &str) -> Result<()> {
 
 pub fn assert_vault_strategy_performance_fee(performance_fee: u32) -> Result<()> {
     require!(
-        performance_fee <= HIGH_PERFORMANCE_FEE,
+        performance_fee <= MAX_PERFORMANCE_FEE,
         TokenizedVaultsErrorCode::PerformanceFeeTooHigh
     );
     require!(
-        performance_fee >= LOW_PERFORMANCE_FEE,
+        performance_fee >= MIN_PERFORMANCE_FEE,
         TokenizedVaultsErrorCode::PerformanceFeeTooLow
     );
     Ok(())

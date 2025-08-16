@@ -287,6 +287,7 @@ describe("create-raydium-vault-strategy", () => {
         openPositionTokenVault1,
         mint0,
         mint1,
+        USDC,
         metadataAccount,
         PYTH_SOL_USD_FEED_ACCOUNT,
         PYTH_USDC_USD_FEED_ACCOUNT,

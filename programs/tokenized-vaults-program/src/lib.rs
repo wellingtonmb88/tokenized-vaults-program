@@ -138,4 +138,24 @@ pub mod tokenized_vaults_program {
     {
         add_liquidity_raydium_vault_strategy::handler(ctx, strategy_id)
     }
+
+    #[instruction(discriminator = DISC_REMOVE_LIQUIDITY_RAYDIUM_VAULT_STRATEGY_IX)]
+    pub fn remove_liquidity_raydium_vault_strategy<'a, 'b, 'c, 'info>(
+        ctx: Context<'a, 'b, 'c, 'info, RemoveLiquidityRaydiumVaultStrategy<'info>>,
+        strategy_id: u8,
+        percentage: u64,
+        amount_0_min: u64,
+        amount_1_min: u64,
+    ) -> Result<()>
+    where
+        'c: 'info,
+    {
+        remove_liquidity_raydium_vault_strategy::handler(
+            ctx,
+            strategy_id,
+            percentage,
+            amount_0_min,
+            amount_1_min,
+        )
+    }
 }
