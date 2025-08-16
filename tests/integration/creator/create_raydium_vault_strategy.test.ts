@@ -71,8 +71,7 @@ describe("create-raydium-vault-strategy", () => {
   );
 
   before(async () => {
-    // Check if we're on devnet and have sufficient balance
-    console.log("Running tests on devnet");
+    console.log("Running tests on ", process.env.ENV);
     console.log("Creator address:", creator.publicKey.toString());
     // Check existing balance first
     const creatorBalance = await connection.getBalance(creator.publicKey);
@@ -185,7 +184,7 @@ describe("create-raydium-vault-strategy", () => {
 
     const positionNftAccount = getAssociatedTokenAddressSync(
       RAYDIUM_POSITION_NFT.publicKey,
-      vaultStrategyPda,
+      vaultStrategyConfigPda,
       true, // allowOwnerOffCurve
       TOKEN_2022_PROGRAM_ID // Only using if using OpenPositionWithToken22Nft
     );
@@ -214,11 +213,66 @@ describe("create-raydium-vault-strategy", () => {
       TOKEN_PROGRAM_ID
     );
 
+    const vaultStrategyCfgUsdcEscrow = await getOrCreateAssociatedTokenAccount(
+      connection as any,
+      creator,
+      USDC,
+      vaultStrategyConfigPda,
+      true,
+      "finalized",
+      { skipPreflight: false },
+      TOKEN_PROGRAM_ID
+    );
+
+    const [vaultStrategyCfgMint0Escrow] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from("vlt_swap_ratio_0_escrow:"),
+        vaultStrategyConfigPda.toBuffer(),
+      ],
+      program.programId
+    );
+
+    const [vaultStrategyCfgMint1Escrow] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from("vlt_swap_ratio_1_escrow:"),
+        vaultStrategyConfigPda.toBuffer(),
+      ],
+      program.programId
+    );
+
+    const [vaultStrategyCfgMint0FeesEscrow] = PublicKey.findProgramAddressSync(
+      [Buffer.from("vlt_fees_0_escrow:"), vaultStrategyConfigPda.toBuffer()],
+      program.programId
+    );
+
+    const [vaultStrategyCfgMint1FeesEscrow] = PublicKey.findProgramAddressSync(
+      [Buffer.from("vlt_fees_1_escrow:"), vaultStrategyConfigPda.toBuffer()],
+      program.programId
+    );
+
+    const [vaultStrategyCfgMint0PerfFeesEscrow] =
+      PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("vlt_perf_fees_0_escrow:"),
+          vaultStrategyConfigPda.toBuffer(),
+        ],
+        program.programId
+      );
+
+    const [vaultStrategyCfgMint1PerfFeesEscrow] =
+      PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("vlt_perf_fees_1_escrow:"),
+          vaultStrategyConfigPda.toBuffer(),
+        ],
+        program.programId
+      );
+
     const { lookupTableAccount } = await createLookUpTable({
       connection: connection as any,
       payer: creator,
       authority: creator,
-      // reuseTable: new PublicKey("HGPxXUNLcotXyAxzmEaALx1RbVAFgSHQjJZA2b5fuz1b"),
+      // reuseTable: new PublicKey("E5RyUCiM9XLYyRhMCS2qRtEzeCpAvv2iSdbdVY9zpHha"),
       addresses: [
         RAYDIUM_POSITION_NFT.publicKey,
         positionNftAccount,
@@ -236,6 +290,21 @@ describe("create-raydium-vault-strategy", () => {
         metadataAccount,
         PYTH_SOL_USD_FEED_ACCOUNT,
         PYTH_USDC_USD_FEED_ACCOUNT,
+
+        vaultStrategyConfigPda,
+        vaultStrategyPda,
+        investorStrategyPositionPda,
+
+        poolStateMint0WithMint1,
+        protocolPosition,
+        vaultStrategyCfgUsdcEscrow.address,
+        vaultStrategyCfgMint0Escrow,
+        vaultStrategyCfgMint1Escrow,
+        vaultStrategyCfgMint0FeesEscrow,
+        vaultStrategyCfgMint1FeesEscrow,
+        vaultStrategyCfgMint0PerfFeesEscrow,
+        vaultStrategyCfgMint1PerfFeesEscrow,
+        bitmapExtMint0WithMint1,
       ],
     });
 
@@ -243,7 +312,6 @@ describe("create-raydium-vault-strategy", () => {
     try {
       const createVaultStrategyIx = await program.methods
         .createRaydiumVaultStrategy(
-          strategyConfigName,
           strategyId,
           percentage,
           amount_0_max,
@@ -253,10 +321,12 @@ describe("create-raydium-vault-strategy", () => {
           tickArrayLowerStartIndex,
           tickArrayUpperStartIndex,
           PYTH_SOL_USD_FEED_ID,
-          PYTH_USDC_USD_FEED_ID
+          PYTH_USDC_USD_FEED_ID,
+          lookupTableAccount.key
         )
         .accounts({
           creator: creator.publicKey,
+          vaultStrategyConfig: vaultStrategyConfigPda,
           raydiumPositionNftMint: RAYDIUM_POSITION_NFT.publicKey,
           raydiumPositionNftAccount: positionNftAccount,
           raydiumPoolState: poolStateMint0WithMint1,
@@ -307,10 +377,7 @@ describe("create-raydium-vault-strategy", () => {
       });
       await confirmTransaction(connection as any, txSignature, "finalized");
 
-      console.log(
-        "\n Vault strategy created with Pyth integration:",
-        txSignature
-      );
+      console.log("\n  Transaction signature:", txSignature);
 
       await sleep(1000);
 

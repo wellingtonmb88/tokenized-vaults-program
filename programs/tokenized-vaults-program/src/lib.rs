@@ -64,7 +64,6 @@ pub mod tokenized_vaults_program {
     #[instruction(discriminator = DISC_CREATE_RAYDIUM_VAULT_STRATEGY_IX)]
     pub fn create_raydium_vault_strategy<'a, 'b, 'c, 'info>(
         ctx: Context<'a, 'b, 'c, 'info, CreateRaydiumVaultStrategy<'info>>,
-        vault_strategy_name: String,
         strategy_id: u8,
         percentage: u32,
         amount_0_max: u64,
@@ -75,13 +74,13 @@ pub mod tokenized_vaults_program {
         tick_array_upper_start_index: i32,
         token_0_feed_id: String,
         token_1_feed_id: String,
+        look_up_table: Pubkey,
     ) -> Result<()>
     where
         'c: 'info,
     {
         create_raydium_vault_strategy::handler(
             ctx,
-            vault_strategy_name,
             strategy_id,
             percentage,
             amount_0_max,
@@ -92,12 +91,8 @@ pub mod tokenized_vaults_program {
             tick_array_upper_start_index,
             token_0_feed_id,
             token_1_feed_id,
+            look_up_table,
         )
-    }
-
-    #[instruction(discriminator = DISC_INIT_INVESTOR_ESCROW_IX)]
-    pub fn init_investor_escrow(ctx: Context<InitInvestorEscrow>) -> Result<()> {
-        init_investor_escrow::handler(ctx)
     }
 
     #[instruction(discriminator = DISC_DEPOSIT_TO_ESCROW_IX)]
@@ -133,5 +128,14 @@ pub mod tokenized_vaults_program {
         )
     }
 
-    
+    #[instruction(discriminator = DISC_ADD_LIQUIDITY_RAYDIUM_VAULT_STRATEGY_IX)]
+    pub fn add_liquidity_raydium_vault_strategy<'a, 'b, 'c, 'info>(
+        ctx: Context<'a, 'b, 'c, 'info, AddLiquidityRaydiumVaultStrategy<'info>>,
+        strategy_id: u8,
+    ) -> Result<()>
+    where
+        'c: 'info,
+    {
+        add_liquidity_raydium_vault_strategy::handler(ctx, strategy_id)
+    }
 }

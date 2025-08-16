@@ -1,4 +1,5 @@
 use anchor_lang::prelude::*;
+use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::{self, Mint, Token, TokenAccount, Transfer};
 
 use crate::error::TokenizedVaultsErrorCode;
@@ -10,33 +11,22 @@ pub struct DepositToEscrow<'info> {
     pub investor: Signer<'info>,
 
     #[account(
-        mut,
-        seeds = [
-            InvestorEscrow::SEED.as_bytes(),
-            investor.key().as_ref(),
-            usdc_mint.key().as_ref(),
-        ],
-        bump = investor_escrow.bump,
-        constraint = investor_escrow.authority == investor.key() @ TokenizedVaultsErrorCode::NotApproved,
-    )]
-    pub investor_escrow: Account<'info, InvestorEscrow>,
-
-    #[account(
-        mut,
+        init_if_needed,
+        payer = investor,
         seeds = [
             InvestorEscrow::VAULT_SEED.as_bytes(),
-            investor_escrow.key().as_ref(),
+            investor.key().as_ref(),
         ],
         bump,
         token::mint = usdc_mint,
-        token::authority = investor_escrow,
+        token::authority = investor,
     )]
     pub escrow_vault: Account<'info, TokenAccount>,
 
     #[account(
         mut,
-        token::mint = usdc_mint,
-        token::authority = investor,
+        associated_token::mint = usdc_mint,
+        associated_token::authority = investor,
     )]
     pub investor_token_account: Account<'info, TokenAccount>,
 
@@ -44,14 +34,14 @@ pub struct DepositToEscrow<'info> {
         constraint = usdc_mint.key() == USDC_MINT @ TokenizedVaultsErrorCode::InvalidMint
     )]
     pub usdc_mint: Account<'info, Mint>,
+
     pub token_program: Program<'info, Token>,
+    pub associated_token_program: Program<'info, AssociatedToken>,
+    pub system_program: Program<'info, System>,
 }
 
 impl<'info> DepositToEscrow<'info> {
     pub fn deposit(&mut self, amount: u64) -> Result<()> {
-        self.investor_escrow
-            .process_deposit(amount, self.investor_token_account.amount)?;
-
         self.transfer_to_escrow(amount)?;
 
         Ok(())

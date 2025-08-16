@@ -1,3 +1,5 @@
+use std::ops::Mul;
+
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::memo::Memo;
@@ -17,8 +19,9 @@ use raydium_clmm_cpi::{cpi, ID as RAYDIUM_CLMM_ID};
 
 use crate::error::TokenizedVaultsErrorCode;
 use crate::{
-    vault_strategy_config, InvestReserveVault, InvestorEscrow, SwapToRatioVault, VaultStrategy,
-    VaultStrategyConfig, DENOMINATOR_MULTIPLIER, MAX_PERCENTAGE, USDC_MINT,
+    get_delta_amounts_signed, vault_strategy_config, InvestReserveVault, InvestorEscrow,
+    SwapToRatioVault, VaultStrategy, VaultStrategyConfig, VaultStrategyStatus, MAX_PERCENTAGE,
+    U256, USDC_MINT,
 };
 
 #[derive(Accounts)]
@@ -44,9 +47,7 @@ pub struct SwapToRatioRaydiumVaultStrategy<'info> {
     pub vault_strategy: Box<Account<'info, VaultStrategy>>,
 
     #[account(
-        init_if_needed,
-        payer = investor,
-        space = InvestReserveVault::DISCRIMINATOR.len() + InvestReserveVault::INIT_SPACE,
+        mut,
         seeds = [InvestReserveVault::SEED.as_bytes(), investor.key().as_ref(), vault_strategy_config.key().as_ref()],
         bump
     )]
@@ -56,13 +57,11 @@ pub struct SwapToRatioRaydiumVaultStrategy<'info> {
     /// Vault strategy Config receives USDC in this account from User's escrow vault
     #[account(
         mut,
-        // seeds = [
-        //     VaultStrategyConfig::VAULT_SWAP_TO_RATIO_USDC_ESCROW_SEED.as_bytes(),
-        //     vault_strategy_config.key().as_ref(),
-        // ],
-        // bump,
-        associated_token::mint = usdc_mint,
-        associated_token::authority = vault_strategy_config,
+        seeds = [
+            VaultStrategyConfig::VAULT_STRATEGY_CFG_USDC_ESCROW_SEED.as_bytes(),
+            vault_strategy_config.key().as_ref(),
+        ],
+        bump,
     )]
     pub vault_strategy_cfg_usdc_escrow: Box<InterfaceAccount<'info, TokenAccount>>,
 
@@ -175,13 +174,19 @@ pub struct SwapToRatioRaydiumVaultStrategy<'info> {
     #[account(mut)]
     pub raydium_observation_state_1: AccountLoader<'info, ObservationState>,
 
+    /// The address that holds raydium pool tokens for token_0
+    #[account(mut)]
+    pub raydium_token_vault_0: Box<InterfaceAccount<'info, TokenAccount>>,
+
+    /// The address that holds raydium pool tokens for token_1
+    #[account(mut)]
+    pub raydium_token_vault_1: Box<InterfaceAccount<'info, TokenAccount>>,
+
     /// SPL program for token transfers
     pub token_program: Program<'info, Token>,
 
     /// SPL program 2022 for token transfers
     pub token_program_2022: Program<'info, Token2022>,
-
-    pub associated_token_program: Program<'info, AssociatedToken>,
 
     /// memo program
     pub memo_program: Program<'info, Memo>,
@@ -202,11 +207,10 @@ impl<'info> SwapToRatioRaydiumVaultStrategy<'info> {
         token_1_amount_out_min: u64,
         remaining_accounts: &[AccountInfo<'info>],
     ) -> Result<()> {
-        // TODO: Remove this after merging @rafa's work
-        self.invest_reserve_vault
-            .initialize(self.vault_strategy_config.key(), 10000000);
-
-        // TODO: Check if Strategy is not in Draft/Closed/Paused
+        // require!(
+        //     self.vault_strategy_config.status == VaultStrategyStatus::Active,
+        //     TokenizedVaultsErrorCode::VaultStrategyConfigNotActive
+        // );
 
         let usdc_amount = self
             .invest_reserve_vault
@@ -214,20 +218,15 @@ impl<'info> SwapToRatioRaydiumVaultStrategy<'info> {
             .saturating_mul(self.vault_strategy.percentage as u64)
             .saturating_div(MAX_PERCENTAGE as u64);
 
-        require!(usdc_amount > 0, TokenizedVaultsErrorCode::InvalidAmount);
+        require!(usdc_amount > 0, TokenizedVaultsErrorCode::NoReservedAmount);
 
         msg!("usdc_amount: {}", usdc_amount);
 
         let (usdc_for_token_0_amount, usdc_for_token_1_amount) =
             self.calc_ratio_amounts_for_usdc(usdc_amount)?;
+
         msg!("usdc_for_token_0_amount: {}", usdc_for_token_0_amount);
         msg!("usdc_for_token_1_amount: {}", usdc_for_token_1_amount);
-
-        let before_escrow_0_amount = self.vault_strategy_cfg_mint_0_escrow.amount;
-        let before_escrow_1_amount = self.vault_strategy_cfg_mint_1_escrow.amount;
-
-        msg!("Before Token 0 amount: {}", before_escrow_0_amount);
-        msg!("Before Token 1 amount: {}", before_escrow_1_amount);
 
         let (token_0_amount_out, token_1_amount_out) = self.swap_usdc_for_tokens(
             usdc_for_token_0_amount,
@@ -237,13 +236,8 @@ impl<'info> SwapToRatioRaydiumVaultStrategy<'info> {
             remaining_accounts,
         )?;
 
-        let after_escrow_0_amount = self.vault_strategy_cfg_mint_0_escrow.amount;
-        let after_escrow_1_amount = self.vault_strategy_cfg_mint_1_escrow.amount;
-        msg!("After Token 0 amount: {}", after_escrow_0_amount);
-        msg!("After Token 1 amount: {}", after_escrow_1_amount);
-
-        msg!("Actual Token 0 amount out: {}", token_0_amount_out);
-        msg!("Actual Token 1 amount out: {}", token_1_amount_out);
+        msg!("Token 0 amount swapped: {}", token_0_amount_out);
+        msg!("Token 1 amount swapped: {}", token_1_amount_out);
 
         self.invest_reserve_vault
             .add_swap_to_ratio_vault(SwapToRatioVault {
@@ -251,6 +245,7 @@ impl<'info> SwapToRatioRaydiumVaultStrategy<'info> {
                 amount_in: usdc_amount,
                 token_0_amount: token_0_amount_out,
                 token_1_amount: token_1_amount_out,
+                executed: false,
             })?;
 
         msg!("Swap to ratio vault added successfully");
@@ -472,54 +467,54 @@ impl<'info> SwapToRatioRaydiumVaultStrategy<'info> {
     }
 
     fn calc_ratio_amounts_for_usdc(&self, usdc_amount: u64) -> Result<(u64, u64)> {
-        let current_sqrt_price = self.raydium_pool_state.load()?.sqrt_price_x64;
-        let low_sqrt_price =
-            tick_math::get_sqrt_price_at_tick(self.raydium_personal_position.tick_lower_index)
-                .unwrap();
-        let high_sqrt_price =
-            tick_math::get_sqrt_price_at_tick(self.raydium_personal_position.tick_upper_index)
-                .unwrap();
+        let pool_state = self.raydium_pool_state.load()?;
+        let current_tick = pool_state.tick_current;
+        let current_sqrt_price = pool_state.sqrt_price_x64;
+        let tick_lower = self.raydium_personal_position.tick_lower_index;
+        let tick_upper = self.raydium_personal_position.tick_upper_index;
+        let personal_liq = self.raydium_personal_position.liquidity;
+        let (vault_amount_0, vault_amount_1) = get_delta_amounts_signed(
+            current_tick,
+            current_sqrt_price,
+            tick_lower,
+            tick_upper,
+            -(personal_liq as i128),
+        )
+        .unwrap();
+        msg!(
+            "Vault amounts: token_0={}, token_1={}",
+            vault_amount_0,
+            vault_amount_1
+        );
 
-        let denominator_multiplier = BigInt::from(DENOMINATOR_MULTIPLIER);
+        // price_token_0_in_token1 = 1/(((current_sqrt_price/(2**64))**2)/10**delta_decimals)
+        // Decode the fixed-point square root price
+        let sqrt_price = current_sqrt_price as f64 / (1_u128 << 64) as f64;
+        let decimal_0 = pool_state.mint_decimals_0;
+        let decimal_1 = pool_state.mint_decimals_1;
+        let decimals_delta = decimal_0 as i8 - decimal_1 as i8;
+        // Calculate the price of token1 in terms of token0
+        let price_token1_in_token0 = sqrt_price * sqrt_price;
 
-        let low_times_high = BigInt::from(low_sqrt_price)
-            .checked_mul(&BigInt::from(high_sqrt_price))
-            .unwrap();
-        let high_times_current = BigInt::from(high_sqrt_price)
-            .checked_mul(&BigInt::from(current_sqrt_price))
-            .unwrap();
+        // Calculate the price of token0 in terms of token1
+        let price_token0_in_token1 =
+            (1.0 / price_token1_in_token0) / 10f64.powi(decimals_delta as i32);
 
-        let a = low_times_high
-            .sqrt()
-            .checked_sub(&high_times_current.sqrt())
-            .unwrap();
-        let b = BigInt::from(current_sqrt_price)
-            .checked_sub(&high_times_current.sqrt())
-            .unwrap();
-        let c = a
-            .checked_mul(&denominator_multiplier)
+        let ratio = (vault_amount_0 as f64 * price_token0_in_token1)
+            / ((vault_amount_0 as f64 * price_token0_in_token1) + (vault_amount_1 as f64))
+            * 100.0;
+
+        let ratio = U256::from(ratio.mul(1e6) as u64);
+        let amount_token_0 = U256::from(usdc_amount)
+            .checked_mul(ratio)
             .unwrap()
-            .checked_div(&b)
-            .unwrap()
-            .checked_add(&denominator_multiplier)
+            .checked_div(U256::from(100_000_000))
             .unwrap();
 
-        let ratio_a = denominator_multiplier
-            .checked_mul(&denominator_multiplier)
-            .unwrap()
-            .checked_div(&c)
-            .unwrap();
-
-        let amount_1 = BigInt::from(usdc_amount)
-            .checked_mul(&ratio_a)
-            .unwrap()
-            .checked_div(&denominator_multiplier)
-            .unwrap();
-        let amount_2 = BigInt::from(usdc_amount).checked_sub(&amount_1).unwrap();
-
+        let amount_token_1 = U256::from(usdc_amount).checked_sub(amount_token_0).unwrap();
         Ok((
-            amount_1.to_string().parse().unwrap(),
-            amount_2.to_string().parse().unwrap(),
+            amount_token_0.to_string().parse().unwrap(),
+            amount_token_1.to_string().parse().unwrap(),
         ))
     }
 }

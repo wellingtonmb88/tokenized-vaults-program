@@ -3,7 +3,7 @@ sync-keys:
 	anchor keys sync
 	
 build:
-	anchor build
+	anchor build -- --features localnet
 
 build-devnet:
 	anchor build -- --features devnet
@@ -12,6 +12,7 @@ deploy-devnet:
 	anchor deploy --provider.cluster devnet
 
 deploy-localnet:
+	anchor build -- --features localnet
 	anchor deploy --provider.cluster localnet
 
 anchor-test-skip:
@@ -37,15 +38,13 @@ start-test-validator-from-dump-mainnet:
 	--bpf-program metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s ./tests/fixtures/metadata_program_mainnet.so \
 	--reset
 
+######################### LOCALNET ########################################
+
 setup-test-env-localnet:
 	make set-config-localnet
 	solana airdrop 1000 Fpyrsw2o2vCh73ggvJY9QdWfYouhzCs27TwTgxkHFA9n
 	solana airdrop 1000 CrtNgYZaY74eqADuHxCYbQNsh33dBrAbkr71N7YSDoqE
 	export ENV=localnet && ts-node ./app/setup.ts
-
-setup-test-env-devnet:
-	make set-config-devnet
-	export ENV=devnet && ts-node ./app/setup.ts
 
 integration-localnet-create_protocol_config:
 	make set-config-localnet
@@ -59,9 +58,18 @@ integration-localnet-create_raydium_vault_strategy:
 	make set-config-localnet
 	export ENV=localnet && make integration-create_raydium_vault_strategy
 
-integration-localnet-swap_to_ratio_raydium_vault_strategy:
+integration-localnet-add_liquidity_raydium_vault_strategy:
 	make set-config-localnet
-	export ENV=localnet && make integration-swap_to_ratio_raydium_vault_strategy
+	export ENV=localnet && make integration-add_liquidity_raydium_vault_strategy
+ 
+
+######################### - ################################################
+
+######################### DEVNET ########################################
+
+setup-test-env-devnet:
+	make set-config-devnet
+	export ENV=devnet && ts-node ./app/setup.ts
 
 integration-devnet-create_protocol_config:
 	make set-config-devnet
@@ -75,25 +83,28 @@ integration-devnet-create_raydium_vault_strategy:
 	make set-config-devnet
 	export ENV=devnet && make integration-create_raydium_vault_strategy
 
-integration-devnet-swap_to_ratio_raydium_vault_strategy:
+integration-devnet-add_liquidity_raydium_vault_strategy:
 	make set-config-devnet
-	export ENV=devnet && make integration-swap_to_ratio_raydium_vault_strategy
+	export ENV=devnet && make integration-add_liquidity_raydium_vault_strategy
+ 
+
+######################### - ################################################
 
 integration-create_protocol_config: 
-	yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/integration/admin/init_protocol_config_test.ts 
-# 	anchor test --skip-local-validator --run tests/integration/init_protocol_config_test.ts
-# 	anchor test --skip-local-validator --run tests/integration/init_vault_strategy_config_test.ts
+	yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/integration/admin/init_protocol_config.test.ts 
+# 	anchor test --skip-local-validator --run tests/integration/init_protocol_config.test.ts
 
 integration-create_vault_strategy_config:  
-	yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/integration/creator/init_vault_strategy_config_test.ts 
+	yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/integration/creator/init_vault_strategy_config.test.ts 
 
 integration-create_raydium_vault_strategy:
-	yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/integration/creator/create_raydium_vault_strategy_test.ts
+	yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/integration/creator/create_raydium_vault_strategy.test.ts
 
-integration-swap_to_ratio_raydium_vault_strategy: 
-	yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/integration/investor/swap_to_ratio_raydium_vault_strategy_test.ts
+integration-add_liquidity_raydium_vault_strategy: 
+	yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/integration/investor/add_liquidity_raydium_vault_strategy.test.ts
+ 
 
 
 # 	solana program dump -u d DRayAUgENGQBKVaX8owNhgzkEDyoHTGVEGHVJT1E9pfH clmm_new_devnet.so 
 # 	solana account -u l --output json-compact --output-file token_a.json 3HuUDVWtrnREWQ4cJe73zQtzmGFcUvXoQ9muW9hUJYiy
-# 	 
+# 	 solana program extend YyUUJsRpeJ5fJEL6JBD7LKibaK43LXov4FzHs2w53J4 20000 

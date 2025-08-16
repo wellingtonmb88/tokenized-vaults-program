@@ -37,7 +37,7 @@ export const createPosition = async (
   // const rpcData = await raydium.clmm.getRpcClmmPoolInfo({ poolId: poolInfo.id })
   // poolInfo.price = rpcData.currentPrice
 
-  const [startPrice, endPrice] = [0.0001, 200];
+  const [startPrice, endPrice] = [0.00001, 2000000];
 
   const { tick: lowerTick } = TickUtils.getPriceAndTick({
     poolInfo,

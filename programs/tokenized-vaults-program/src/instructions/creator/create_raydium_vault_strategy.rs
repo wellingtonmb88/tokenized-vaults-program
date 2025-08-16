@@ -11,26 +11,27 @@ use raydium_clmm_cpi::{cpi, program::RaydiumClmm, states::PoolState};
 
 use crate::{
     error::TokenizedVaultsErrorCode,
+    get_liquidity_from_amounts,
     state::*,
+    tick_math,
     utils::{convert_amounts_to_usd, get_price_from_pyth_update},
     ProtocolStatus, VaultStrategyStatus, RAYDIUM_CLMM_ID,
 };
 
 #[derive(Accounts)]
-#[instruction(vault_strategy_name: String, strategy_id: u8)]
+#[instruction(strategy_id: u8)]
 pub struct CreateRaydiumVaultStrategy<'info> {
     #[account(mut)]
     pub creator: Signer<'info>,
 
     #[account(
         mut,
-        seeds = [VaultStrategyConfig::SEED.as_bytes(), creator.key().as_ref(), vault_strategy_name.as_ref()],
-        bump
+        constraint = vault_strategy_config.creator == creator.key()
     )]
     pub vault_strategy_config: Box<Account<'info, VaultStrategyConfig>>,
 
     #[account(
-        init_if_needed,
+        init_if_needed, // We should use init instead to prevent reinitialization with the same seeds
         payer = creator,
         space = VaultStrategy::DISCRIMINATOR.len() + VaultStrategy::INIT_SPACE,
         seeds = [
@@ -87,6 +88,66 @@ pub struct CreateRaydiumVaultStrategy<'info> {
     )]
     pub vault_strategy_cfg_mint_1_escrow: Box<InterfaceAccount<'info, TokenAccount>>,
 
+    /// The escrow account for the token 0
+    /// Vault strategy Config receives token 0 in this account from Raydium Swap
+    #[account(
+        init_if_needed,
+        payer = creator,
+        seeds = [
+            VaultStrategyConfig::VAULT_FEES_0_ESCROW_SEED.as_bytes(),
+            vault_strategy_config.key().as_ref(),
+        ],
+        bump,
+        token::mint = raydium_vault_0_mint,
+        token::authority = vault_strategy_config,
+    )]
+    pub vault_strategy_cfg_mint_0_fees_escrow: Box<InterfaceAccount<'info, TokenAccount>>,
+
+    /// The escrow account for the token 1
+    /// Vault strategy Config receives token 1 in this account from Raydium Swap
+    #[account(
+        init_if_needed,
+        payer = creator,
+        seeds = [
+            VaultStrategyConfig::VAULT_FEES_1_ESCROW_SEED.as_bytes(),
+            vault_strategy_config.key().as_ref(),
+        ],
+        bump,
+        token::mint = raydium_vault_1_mint,
+        token::authority = vault_strategy_config,
+    )]
+    pub vault_strategy_cfg_mint_1_fees_escrow: Box<InterfaceAccount<'info, TokenAccount>>,
+
+    /// The escrow account for the token 0
+    /// Vault strategy Config receives token 0 in this account from Raydium Swap
+    #[account(
+        init_if_needed,
+        payer = creator,
+        seeds = [
+            VaultStrategyConfig::VAULT_PERF_FEES_0_ESCROW_SEED.as_bytes(),
+            vault_strategy_config.key().as_ref(),
+        ],
+        bump,
+        token::mint = raydium_vault_0_mint,
+        token::authority = vault_strategy_config,
+    )]
+    pub vault_strategy_cfg_mint_0_perf_fees_escrow: Box<InterfaceAccount<'info, TokenAccount>>,
+
+    /// The escrow account for the token 1
+    /// Vault strategy Config receives token 1 in this account from Raydium Swap
+    #[account(
+        init_if_needed,
+        payer = creator,
+        seeds = [
+            VaultStrategyConfig::VAULT_PERF_FEES_1_ESCROW_SEED.as_bytes(),
+            vault_strategy_config.key().as_ref(),
+        ],
+        bump,
+        token::mint = raydium_vault_1_mint,
+        token::authority = vault_strategy_config,
+    )]
+    pub vault_strategy_cfg_mint_1_perf_fees_escrow: Box<InterfaceAccount<'info, TokenAccount>>,
+
     /* Pyth Price Feeds */
     /// CHECK: Pyth price update account for token 0
     pub pyth_token_0_price_update: Box<Account<'info, PriceUpdateV2>>,
@@ -108,10 +169,8 @@ pub struct CreateRaydiumVaultStrategy<'info> {
     pub raydium_position_nft_account: UncheckedAccount<'info>,
 
     /// CHECK: Add liquidity for this raydium pool
-    // #[account(mut)]
-    // pub raydium_pool_state: AccountLoader<'info, PoolState>,
     #[account(mut)]
-    pub raydium_pool_state: UncheckedAccount<'info>,
+    pub raydium_pool_state: AccountLoader<'info, PoolState>,
 
     /// CHECK: Store the information of raydium market marking in range
     #[account(mut)]
@@ -187,7 +246,6 @@ pub struct CreateRaydiumVaultStrategy<'info> {
 impl<'a, 'b, 'c: 'info, 'info> CreateRaydiumVaultStrategy<'info> {
     pub fn create(
         &mut self,
-        _vault_strategy_name: String,
         strategy_id: u8,
         percentage: u32,
         amount_0_max: u64,
@@ -198,6 +256,7 @@ impl<'a, 'b, 'c: 'info, 'info> CreateRaydiumVaultStrategy<'info> {
         tick_array_upper_start_index: i32,
         token_0_feed_id: String,
         token_1_feed_id: String,
+        look_up_table: Pubkey,
         remaining_accounts: &'c [AccountInfo<'info>],
         bump: u8,
     ) -> Result<()> {
@@ -211,7 +270,6 @@ impl<'a, 'b, 'c: 'info, 'info> CreateRaydiumVaultStrategy<'info> {
             tick_upper_index,
             tick_array_lower_start_index,
             tick_array_upper_start_index,
-            0, // do not provide liquidity, because we are just creating the position
             amount_0_max,
             amount_1_max,
             remaining_accounts,
@@ -257,6 +315,7 @@ impl<'a, 'b, 'c: 'info, 'info> CreateRaydiumVaultStrategy<'info> {
 
         self.vault_strategy.initialize(
             self.creator.key(),
+            look_up_table,
             self.vault_strategy_config.key(),
             self.raydium_position_nft_mint.key(),
             self.raydium_vault_0_mint.key(),
@@ -268,7 +327,7 @@ impl<'a, 'b, 'c: 'info, 'info> CreateRaydiumVaultStrategy<'info> {
             bump,
         )?;
 
-        msg!("Vault strategy created successfully with USDC conversion");
+        msg!("Vault strategy created successfully");
 
         Ok(())
     }
@@ -304,14 +363,28 @@ impl<'a, 'b, 'c: 'info, 'info> CreateRaydiumVaultStrategy<'info> {
         tick_upper_index: i32,
         tick_array_lower_start_index: i32,
         tick_array_upper_start_index: i32,
-        liquidity: u128,
         amount_0_max: u64,
         amount_1_max: u64,
         remaining_accounts: &'c [AccountInfo<'info>],
     ) -> Result<()> {
+        let liquidity = {
+            let pool_state = self.raydium_pool_state.load()?;
+            let current_sqrt_price = pool_state.sqrt_price_x64;
+            let low_sqrt_price = tick_math::get_sqrt_price_at_tick(tick_lower_index).unwrap();
+            let high_sqrt_price = tick_math::get_sqrt_price_at_tick(tick_upper_index).unwrap();
+
+            get_liquidity_from_amounts(
+                current_sqrt_price,
+                low_sqrt_price,
+                high_sqrt_price,
+                amount_0_max,
+                amount_1_max,
+            )
+        };
+
         let cpi_accounts = cpi::accounts::OpenPositionWithToken22Nft {
             payer: self.creator.to_account_info(),
-            position_nft_owner: self.vault_strategy.to_account_info(),
+            position_nft_owner: self.vault_strategy_config.to_account_info(),
             position_nft_mint: self.raydium_position_nft_mint.to_account_info(),
             position_nft_account: self.raydium_position_nft_account.to_account_info(),
             pool_state: self.raydium_pool_state.to_account_info(),
@@ -354,7 +427,6 @@ impl<'a, 'b, 'c: 'info, 'info> CreateRaydiumVaultStrategy<'info> {
 
 pub fn handler<'a, 'b, 'c, 'info>(
     ctx: Context<'a, 'b, 'c, 'info, CreateRaydiumVaultStrategy<'info>>,
-    vault_strategy_name: String,
     strategy_id: u8,
     percentage: u32,
     amount_0_max: u64,
@@ -365,13 +437,13 @@ pub fn handler<'a, 'b, 'c, 'info>(
     tick_array_upper_start_index: i32,
     token_0_feed_id: String,
     token_1_feed_id: String,
+    look_up_table: Pubkey,
 ) -> Result<()>
 where
     'c: 'info,
 {
     let bump = ctx.bumps.vault_strategy;
     ctx.accounts.create(
-        vault_strategy_name,
         strategy_id,
         percentage,
         amount_0_max,
@@ -382,6 +454,7 @@ where
         tick_array_upper_start_index,
         token_0_feed_id,
         token_1_feed_id,
+        look_up_table,
         ctx.remaining_accounts,
         bump,
     )

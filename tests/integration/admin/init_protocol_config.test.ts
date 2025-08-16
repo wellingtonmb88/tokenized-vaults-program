@@ -40,7 +40,7 @@ describe("init-protocol-config", () => {
 
   // Airdrop SOL to admin account for pay transactions fees.
   before(async () => {
-    console.log("Running tests on devnet");
+    console.log("Running tests on ", process.env.ENV);
     console.log("Admin address:", creator.publicKey.toString());
 
     const accountInfo = await connection.getAccountInfo(protocolConfigPda);
