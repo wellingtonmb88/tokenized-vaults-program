@@ -230,9 +230,9 @@ impl<'info> AddLiquidityRaydiumVaultStrategy<'info> {
                 total_shares,
             )?;
         }
-        self.vault_strategy.update_assets(amount_in)?;
+        self.vault_strategy.add_assets(amount_in)?;
         self.vault_strategy
-            .update_shares(self.investor_strategy_position.shares)?;
+            .add_shares(self.investor_strategy_position.shares)?;
 
         msg!("Liquidity added successfully");
         Ok(())

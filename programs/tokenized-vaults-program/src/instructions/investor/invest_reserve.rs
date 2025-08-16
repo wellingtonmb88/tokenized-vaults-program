@@ -1,7 +1,9 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Mint, Token, TokenAccount, Transfer};
+use anchor_spl::token::Token;
+use anchor_spl::token_interface::{self, Mint, TokenAccount, Transfer};
 
 use crate::error::TokenizedVaultsErrorCode;
+use crate::utils::transfer_token;
 use crate::{
     InvestReserveVault, InvestorEscrow, InvestorStrategyPosition, VaultStrategyConfig,
     VaultStrategyStatus, USDC_MINT,
@@ -25,7 +27,7 @@ pub struct InvestReserve<'info> {
         token::mint = usdc_mint,
         token::authority = investor,
     )]
-    pub escrow_vault: Account<'info, TokenAccount>,
+    pub escrow_vault: InterfaceAccount<'info, TokenAccount>,
 
     #[account(
         mut,
@@ -37,7 +39,7 @@ pub struct InvestReserve<'info> {
         token::mint = usdc_mint,
         token::authority = vault_strategy_config,
     )]
-    pub vault_strategy_cfg_usdc_escrow: Account<'info, TokenAccount>,
+    pub vault_strategy_cfg_usdc_escrow: InterfaceAccount<'info, TokenAccount>,
 
     #[account(
         init_if_needed,
@@ -55,7 +57,7 @@ pub struct InvestReserve<'info> {
     #[account(
         constraint = usdc_mint.key() == USDC_MINT @ TokenizedVaultsErrorCode::InvalidMint
     )]
-    pub usdc_mint: Account<'info, Mint>,
+    pub usdc_mint: InterfaceAccount<'info, Mint>,
 
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
@@ -94,17 +96,16 @@ impl<'info> InvestReserve<'info> {
             &[escrow_vault_bump],
         ];
         let signer_seeds = &[&seeds[..]];
+        transfer_token(
+            &self.escrow_vault,
+            &self.vault_strategy_cfg_usdc_escrow,
+            amount,
+            &self.usdc_mint,
+            &self.investor,
+            &self.token_program,
+            Some(signer_seeds),
+        )?;
 
-        let cpi_accounts = Transfer {
-            from: self.escrow_vault.to_account_info(),
-            to: self.vault_strategy_cfg_usdc_escrow.to_account_info(),
-            authority: self.investor.to_account_info(),
-        };
-
-        let cpi_program = self.token_program.to_account_info();
-        let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
-
-        token::transfer(cpi_ctx, amount)?;
         Ok(())
     }
 }

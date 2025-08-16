@@ -142,4 +142,7 @@ pub enum TokenizedVaultsErrorCode {
 
     #[msg("No reserved amount")]
     NoReservedAmount,
+
+    #[msg("Invalid remove percentage")]
+    InvalidRemovePercentage,
 }

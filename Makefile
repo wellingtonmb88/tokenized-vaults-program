@@ -40,11 +40,15 @@ start-test-validator-from-dump-mainnet:
 
 ######################### LOCALNET ########################################
 
-setup-test-env-localnet:
+setup-test-localnet:
 	make set-config-localnet
 	solana airdrop 1000 Fpyrsw2o2vCh73ggvJY9QdWfYouhzCs27TwTgxkHFA9n
 	solana airdrop 1000 CrtNgYZaY74eqADuHxCYbQNsh33dBrAbkr71N7YSDoqE
 	export ENV=localnet && ts-node ./app/setup.ts
+
+generate-fees-localnet:
+	make set-config-localnet
+	export ENV=localnet && ts-node ./app/generateFees.ts
 
 integration-localnet-create_protocol_config:
 	make set-config-localnet
@@ -61,6 +65,10 @@ integration-localnet-create_raydium_vault_strategy:
 integration-localnet-add_liquidity_raydium_vault_strategy:
 	make set-config-localnet
 	export ENV=localnet && make integration-add_liquidity_raydium_vault_strategy
+
+integration-localnet-remove_liquidity_raydium_vault_strategy:
+	make set-config-localnet
+	export ENV=localnet && make integration-remove_liquidity_raydium_vault_strategy
  
 
 ######################### - ################################################
@@ -70,6 +78,10 @@ integration-localnet-add_liquidity_raydium_vault_strategy:
 setup-test-env-devnet:
 	make set-config-devnet
 	export ENV=devnet && ts-node ./app/setup.ts
+
+generate-fees-devnet:
+	make set-config-devnet
+	export ENV=devnet && ts-node ./app/generateFees.ts
 
 integration-devnet-create_protocol_config:
 	make set-config-devnet
@@ -86,7 +98,10 @@ integration-devnet-create_raydium_vault_strategy:
 integration-devnet-add_liquidity_raydium_vault_strategy:
 	make set-config-devnet
 	export ENV=devnet && make integration-add_liquidity_raydium_vault_strategy
- 
+
+integration-devnet-remove_liquidity_raydium_vault_strategy:
+	make set-config-devnet
+	export ENV=devnet && make integration-remove_liquidity_raydium_vault_strategy
 
 ######################### - ################################################
 
@@ -102,7 +117,9 @@ integration-create_raydium_vault_strategy:
 
 integration-add_liquidity_raydium_vault_strategy: 
 	yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/integration/investor/add_liquidity_raydium_vault_strategy.test.ts
- 
+
+integration-remove_liquidity_raydium_vault_strategy: 
+	yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/integration/investor/remove_liquidity_raydium_vault_strategy.test.ts
 
 
 # 	solana program dump -u d DRayAUgENGQBKVaX8owNhgzkEDyoHTGVEGHVJT1E9pfH clmm_new_devnet.so 
