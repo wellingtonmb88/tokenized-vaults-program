@@ -3,7 +3,8 @@ use anchor_spl::token::{self, Mint, Token, TokenAccount, Transfer};
 
 use crate::error::TokenizedVaultsErrorCode;
 use crate::{
-    InvestReserveVault, InvestorEscrow, VaultStrategyConfig, VaultStrategyStatus, USDC_MINT,
+    InvestReserveVault, InvestorEscrow, InvestorStrategyPosition, VaultStrategyConfig,
+    VaultStrategyStatus, USDC_MINT,
 };
 
 #[derive(Accounts)]

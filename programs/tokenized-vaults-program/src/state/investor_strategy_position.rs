@@ -39,8 +39,15 @@ impl InvestorStrategyPosition {
         total_vault_assets: u64,
         total_vault_shares: u64,
     ) -> Result<()> {
-        self.shares =
-            self.convert_assets_to_shares(assets, total_vault_assets, total_vault_shares)?;
+        self.shares = self.shares.saturating_add(self.convert_assets_to_shares(
+            assets,
+            total_vault_assets,
+            total_vault_shares,
+        )?);
+        require!(
+            self.shares > 0,
+            TokenizedVaultsErrorCode::SharesCalculatedToZero
+        );
         self.assets = self.assets.saturating_add(assets);
         require!(
             self.assets > 0,
@@ -50,8 +57,8 @@ impl InvestorStrategyPosition {
         emit!(InvestorStrategyPositionEvent {
             authority: self.authority,
             vault_strategy_key: self.vault_strategy_key,
-            shares: total_vault_shares,
-            assets: total_vault_assets,
+            shares: self.shares,
+            assets: self.assets,
         });
         Ok(())
     }

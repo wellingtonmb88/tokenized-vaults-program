@@ -21,8 +21,8 @@ use crate::error::TokenizedVaultsErrorCode;
 use crate::{
     get_delta_amounts_signed, get_liquidity_from_amount_0, get_liquidity_from_amount_1,
     get_liquidity_from_amounts, vault_strategy_config, InvestReserveVault, InvestorEscrow,
-    SwapToRatioVault, VaultStrategy, VaultStrategyConfig, DENOMINATOR_MULTIPLIER, MAX_PERCENTAGE,
-    U256, USDC_MINT,
+    InvestorStrategyPosition, SwapToRatioVault, VaultStrategy, VaultStrategyConfig,
+    DENOMINATOR_MULTIPLIER, MAX_PERCENTAGE, U256, USDC_MINT,
 };
 
 #[derive(Accounts)]
@@ -53,6 +53,19 @@ pub struct AddLiquidityRaydiumVaultStrategy<'info> {
         bump
     )]
     pub invest_reserve_vault: Box<Account<'info, InvestReserveVault>>,
+
+    #[account(
+        init_if_needed,
+        payer = investor,
+        space = InvestorStrategyPosition::DISCRIMINATOR.len() + InvestorStrategyPosition::INIT_SPACE,
+        seeds = [
+            InvestorStrategyPosition::SEED.as_bytes(),
+            vault_strategy.key().as_ref(),
+            investor.key().as_ref(),
+        ],
+        bump
+    )]
+    pub investor_strategy_position: Box<Account<'info, InvestorStrategyPosition>>,
 
     /// The escrow account for the token 0
     /// Vault strategy Config receives token 0 in this account from Raydium Swap
@@ -158,20 +171,19 @@ pub struct AddLiquidityRaydiumVaultStrategy<'info> {
 }
 
 impl<'info> AddLiquidityRaydiumVaultStrategy<'info> {
-    pub fn process(&mut self, remaining_accounts: &[AccountInfo<'info>]) -> Result<()> {
-        let amount_0_max = self
+    pub fn process(
+        &mut self,
+        investor_strategy_position_bump: u8,
+        remaining_accounts: &[AccountInfo<'info>],
+    ) -> Result<()> {
+        let (amount_in, amount_0_max, amount_1_max) = self
             .invest_reserve_vault
             .swap_to_ratio_vaults
             .iter()
             .find(|v| !v.executed && v.vault_strategy_key == self.vault_strategy.key())
-            .map_or(0, |v| v.token_0_amount);
-
-        let amount_1_max = self
-            .invest_reserve_vault
-            .swap_to_ratio_vaults
-            .iter()
-            .find(|v| !v.executed && v.vault_strategy_key == self.vault_strategy.key())
-            .map_or(0, |v| v.token_1_amount);
+            .map_or((0, 0, 0), |v| {
+                (v.amount_in, v.token_0_amount, v.token_1_amount)
+            });
 
         // Add validation to ensure we have non-zero amounts
         require!(
@@ -198,6 +210,29 @@ impl<'info> AddLiquidityRaydiumVaultStrategy<'info> {
             self.invest_reserve_vault
                 .set_swap_to_ratio_executed(self.vault_strategy.key(), true)?;
         }
+
+        let total_assets = self.vault_strategy.total_assets;
+        let total_shares = self.vault_strategy.total_shares;
+
+        if self.investor_strategy_position.vault_strategy_key == Pubkey::default() {
+            self.investor_strategy_position.initialize(
+                self.investor.key(),
+                self.vault_strategy.key(),
+                amount_in,
+                total_assets,
+                total_shares,
+                investor_strategy_position_bump,
+            )?;
+        } else {
+            self.investor_strategy_position.deposit_assets(
+                amount_in,
+                total_assets,
+                total_shares,
+            )?;
+        }
+        self.vault_strategy.update_assets(amount_in)?;
+        self.vault_strategy
+            .update_shares(self.investor_strategy_position.shares)?;
 
         msg!("Liquidity added successfully");
         Ok(())
@@ -298,5 +333,6 @@ pub fn handler<'a, 'b, 'c, 'info>(
 where
     'c: 'info,
 {
-    ctx.accounts.process(ctx.remaining_accounts)
+    ctx.accounts
+        .process(ctx.bumps.investor_strategy_position, ctx.remaining_accounts)
 }
