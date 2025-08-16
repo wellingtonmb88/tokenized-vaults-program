@@ -102,7 +102,6 @@ impl<'info> InvestReserve<'info> {
 
         let cpi_program = self.token_program.to_account_info();
         let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
-        // let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
 
         token::transfer(cpi_ctx, amount)?;
         Ok(())
@@ -110,5 +109,5 @@ impl<'info> InvestReserve<'info> {
 }
 
 pub fn handler(ctx: Context<InvestReserve>, amount: u64) -> Result<()> {
-    ctx.accounts.invest(amount, 1)
+    ctx.accounts.invest(amount, ctx.bumps.escrow_vault)
 }
