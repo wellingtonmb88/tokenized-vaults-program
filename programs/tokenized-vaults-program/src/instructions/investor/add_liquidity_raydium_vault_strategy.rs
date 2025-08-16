@@ -158,23 +158,19 @@ pub struct AddLiquidityRaydiumVaultStrategy<'info> {
 }
 
 impl<'info> AddLiquidityRaydiumVaultStrategy<'info> {
-    pub fn process(
-        &mut self,
-        strategy_id: u8,
-        remaining_accounts: &[AccountInfo<'info>],
-    ) -> Result<()> {
+    pub fn process(&mut self, remaining_accounts: &[AccountInfo<'info>]) -> Result<()> {
         let amount_0_max = self
             .invest_reserve_vault
             .swap_to_ratio_vaults
             .iter()
-            .find(|v| v.vault_strategy_key == self.vault_strategy.key())
+            .find(|v| !v.executed && v.vault_strategy_key == self.vault_strategy.key())
             .map_or(0, |v| v.token_0_amount);
 
         let amount_1_max = self
             .invest_reserve_vault
             .swap_to_ratio_vaults
             .iter()
-            .find(|v| v.vault_strategy_key == self.vault_strategy.key())
+            .find(|v| !v.executed && v.vault_strategy_key == self.vault_strategy.key())
             .map_or(0, |v| v.token_1_amount);
 
         // Add validation to ensure we have non-zero amounts
@@ -189,7 +185,7 @@ impl<'info> AddLiquidityRaydiumVaultStrategy<'info> {
             amount_1_max
         );
 
-        self.increase_liquidity(strategy_id, remaining_accounts)?;
+        self.increase_liquidity(amount_0_max, amount_1_max, remaining_accounts)?;
 
         if let Some(strategy) = self.vault_strategy_config.strategies.last() {
             if self.vault_strategy.key() == strategy.key() {
@@ -209,23 +205,10 @@ impl<'info> AddLiquidityRaydiumVaultStrategy<'info> {
 
     fn increase_liquidity(
         &mut self,
-        _strategy_id: u8,
+        amount_0_max: u64,
+        amount_1_max: u64,
         remaining_accounts: &[AccountInfo<'info>],
     ) -> Result<()> {
-        let amount_0_max = self
-            .invest_reserve_vault
-            .swap_to_ratio_vaults
-            .iter()
-            .find(|v| !v.executed && v.vault_strategy_key == self.vault_strategy.key())
-            .map_or(0, |v| v.token_0_amount);
-
-        let amount_1_max = self
-            .invest_reserve_vault
-            .swap_to_ratio_vaults
-            .iter()
-            .find(|v| !v.executed && v.vault_strategy_key == self.vault_strategy.key())
-            .map_or(0, |v| v.token_1_amount);
-
         let liquidity = {
             let pool_state = self.raydium_pool_state.load()?;
             let current_sqrt_price = pool_state.sqrt_price_x64;
@@ -310,10 +293,10 @@ impl<'info> AddLiquidityRaydiumVaultStrategy<'info> {
 
 pub fn handler<'a, 'b, 'c, 'info>(
     ctx: Context<'a, 'b, 'c, 'info, AddLiquidityRaydiumVaultStrategy<'info>>,
-    strategy_id: u8,
+    _strategy_id: u8,
 ) -> Result<()>
 where
     'c: 'info,
 {
-    ctx.accounts.process(strategy_id, ctx.remaining_accounts)
+    ctx.accounts.process(ctx.remaining_accounts)
 }

@@ -27,7 +27,7 @@ impl InvestorEscrow {
             .amount
             .checked_add(amount)
             .ok_or(crate::error::TokenizedVaultsErrorCode::MathOverflow)?;
-         emit!(InvestorEscrowDepositEvent {
+        emit!(InvestorEscrowDepositEvent {
             authority: self.authority,
             amount
         });
@@ -59,7 +59,7 @@ impl InvestorEscrow {
             .amount
             .checked_sub(amount)
             .ok_or(crate::error::TokenizedVaultsErrorCode::MathOverflow)?;
-         emit!(InvestorEscrowEvent {
+        emit!(InvestorEscrowEvent {
             authority: self.authority,
             amount
         });

@@ -27,7 +27,7 @@ pub struct VaultStrategyConfig {
 impl VaultStrategyConfig {
     pub const SEED: &str = "vault_strategy_config:";
     pub const VAULT_SEED: &str = "vlt_strtg_cfg_vault:";
-    pub const VAULT_SWAP_TO_RATIO_USDC_ESCROW_SEED: &str = "vlt_swap_ratio_usdc_escrow:";
+    pub const VAULT_STRATEGY_CFG_USDC_ESCROW_SEED: &str = "vlt_strategy_cfg_usdc_escrow:";
     pub const VAULT_SWAP_TO_RATIO_0_ESCROW_SEED: &str = "vlt_swap_ratio_0_escrow:";
     pub const VAULT_SWAP_TO_RATIO_1_ESCROW_SEED: &str = "vlt_swap_ratio_1_escrow:";
     pub const VAULT_FEES_0_ESCROW_SEED: &str = "vlt_fees_0_escrow:";

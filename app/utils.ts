@@ -182,7 +182,6 @@ export const createLookUpTable = async ({
       `https://explorer.solana.com/tx/${txId}?cluster=custom&customUrl=http://localhost:8899`
     );
     console.log();
-    await sleep(3000);
 
     const lookupTableAccount = (
       await connection.getAddressLookupTable(lookupTableAddress, {
@@ -191,6 +190,89 @@ export const createLookUpTable = async ({
     ).value;
 
     return { lookupTableAddress, lookupTableAccount };
+  } else {
+    const lookupTableAccount = (
+      await connection.getAddressLookupTable(reuseTable, {
+        commitment: "confirmed",
+      })
+    ).value;
+
+    return { reuseTable, lookupTableAccount };
+  }
+};
+
+export const createLookUpTableIx = async ({
+  connection,
+  payer,
+  authority,
+  addresses,
+  reuseTable,
+}: {
+  connection: anchor.web3.Connection;
+  payer: Keypair;
+  authority: Keypair;
+  addresses: PublicKey[];
+  reuseTable?: PublicKey;
+}) => {
+  if (!reuseTable) {
+    const slot = await connection.getSlot();
+    const [lookupTableInst, lookupTableAddress] =
+      anchor.web3.AddressLookupTableProgram.createLookupTable({
+        authority: authority.publicKey,
+        payer: payer.publicKey,
+        recentSlot: slot - 1,
+      });
+
+    console.log(
+      "\n Created lookup table with address:",
+      lookupTableAddress.toBase58()
+    );
+    console.log();
+
+    let blockhash = await connection
+      .getLatestBlockhash()
+      .then((res) => res.blockhash);
+
+    const extendInstruction =
+      anchor.web3.AddressLookupTableProgram.extendLookupTable({
+        payer: payer.publicKey,
+        authority: authority.publicKey,
+        lookupTable: lookupTableAddress,
+        addresses,
+      });
+
+    const messageV0 = new web3.TransactionMessage({
+      payerKey: payer.publicKey,
+      recentBlockhash: blockhash,
+      instructions: [lookupTableInst, extendInstruction],
+    }).compileToV0Message();
+
+    // const transaction = new web3.VersionedTransaction(messageV0);
+
+    // //// sign your transaction with the required `Signers`
+    // transaction.sign([payer]);
+
+    // const txId = await connection.sendTransaction(transaction, {
+    //   skipPreflight: false,
+    //   preflightCommitment: "finalized",
+    // });
+
+    // await confirmTransaction(connection as any, txId, "finalized");
+    // await sleep(1000);
+    // console.log();
+    // console.log(
+    //   "LookUpTable",
+    //   `https://explorer.solana.com/tx/${txId}?cluster=custom&customUrl=http://localhost:8899`
+    // );
+    // console.log();
+
+    // const lookupTableAccount = (
+    //   await connection.getAddressLookupTable(lookupTableAddress, {
+    //     commitment: "confirmed",
+    //   })
+    // ).value;
+
+    return { instructions: [lookupTableInst, extendInstruction] };
   } else {
     const lookupTableAccount = (
       await connection.getAddressLookupTable(reuseTable, {
@@ -358,7 +440,11 @@ export const getTokenBalanceForOwner = async (
 ) => {
   try {
     // Get the associated token account address
-    // const ata = await getAssociatedTokenAddress(mint, owner, allowOwnerOffCurve);
+    const ata = await getAssociatedTokenAddress(
+      mint,
+      owner,
+      allowOwnerOffCurve
+    );
 
     // Get the balance
     const balance = await connection.getTokenAccountBalance(owner);
@@ -399,14 +485,12 @@ export const fetchTokenAccountData = async (
   return tokenAccountData;
 };
 
-
 export const customMintToWithATA = async (
   connection: Connection,
   authority: Keypair,
   to: PublicKey,
   mint: PublicKey,
-  amount: number,
-  
+  amount: number
 ): Promise<PublicKey> => {
   const toAta = await getOrCreateAssociatedTokenAccount(
     connection,

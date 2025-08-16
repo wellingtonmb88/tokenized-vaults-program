@@ -8,6 +8,7 @@ use anchor_lang::prelude::*;
 #[account(discriminator = DISC_VAULT_STRATEGY_ACCOUNT)]
 pub struct VaultStrategy {
     pub creator: Pubkey,
+    pub look_up_table: Pubkey,
     pub vault_strategy_config_key: Pubkey,
     pub dex_nft_mint: Pubkey,
     pub mint_0: Pubkey,
@@ -26,6 +27,7 @@ impl VaultStrategy {
     pub fn initialize(
         &mut self,
         creator: Pubkey,
+        look_up_table: Pubkey,
         vault_strategy_config_key: Pubkey,
         dex_nft_mint: Pubkey,
         mint_0: Pubkey,
@@ -36,19 +38,27 @@ impl VaultStrategy {
         strategy_id: u8,
         bump: u8,
     ) -> Result<()> {
+        require!(
+            self.dex_nft_mint == Pubkey::default(),
+            TokenizedVaultsErrorCode::VaultStrategyInitialized
+        );
+
         assert_vault_strategy_percentage(percentage)?;
 
         self.update_assets(assets)?;
         self.update_shares(shares)?;
 
-        self.creator = creator;
-        self.vault_strategy_config_key = vault_strategy_config_key;
-        self.dex_nft_mint = dex_nft_mint;
-        self.mint_0 = mint_0;
-        self.mint_1 = mint_1;
-        self.percentage = percentage;
-        self.strategy_id = strategy_id;
-        self.bump = bump;
+        self.set_inner(
+            creator,
+            look_up_table,
+            vault_strategy_config_key,
+            dex_nft_mint,
+            mint_0,
+            mint_1,
+            percentage,
+            strategy_id,
+            bump,
+        )?;
 
         emit!(VaultStrategyInitializeEvent {
             creator,
@@ -62,6 +72,30 @@ impl VaultStrategy {
             strategy_id,
         });
 
+        Ok(())
+    }
+
+    pub fn set_inner(
+        &mut self,
+        creator: Pubkey,
+        look_up_table: Pubkey,
+        vault_strategy_config_key: Pubkey,
+        dex_nft_mint: Pubkey,
+        mint_0: Pubkey,
+        mint_1: Pubkey,
+        percentage: u32,
+        strategy_id: u8,
+        bump: u8,
+    ) -> Result<()> {
+        self.creator = creator;
+        self.look_up_table = look_up_table;
+        self.vault_strategy_config_key = vault_strategy_config_key;
+        self.dex_nft_mint = dex_nft_mint;
+        self.mint_0 = mint_0;
+        self.mint_1 = mint_1;
+        self.percentage = percentage;
+        self.strategy_id = strategy_id;
+        self.bump = bump;
         Ok(())
     }
 

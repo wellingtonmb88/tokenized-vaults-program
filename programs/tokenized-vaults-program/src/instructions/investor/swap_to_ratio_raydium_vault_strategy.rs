@@ -20,7 +20,7 @@ use raydium_clmm_cpi::{cpi, ID as RAYDIUM_CLMM_ID};
 use crate::error::TokenizedVaultsErrorCode;
 use crate::{
     get_delta_amounts_signed, vault_strategy_config, InvestReserveVault, InvestorEscrow,
-    SwapToRatioVault, VaultStrategy, VaultStrategyConfig, DENOMINATOR_MULTIPLIER, MAX_PERCENTAGE,
+    SwapToRatioVault, VaultStrategy, VaultStrategyConfig, VaultStrategyStatus, MAX_PERCENTAGE,
     U256, USDC_MINT,
 };
 
@@ -47,9 +47,7 @@ pub struct SwapToRatioRaydiumVaultStrategy<'info> {
     pub vault_strategy: Box<Account<'info, VaultStrategy>>,
 
     #[account(
-        init_if_needed,
-        payer = investor,
-        space = InvestReserveVault::DISCRIMINATOR.len() + InvestReserveVault::INIT_SPACE,
+        mut,
         seeds = [InvestReserveVault::SEED.as_bytes(), investor.key().as_ref(), vault_strategy_config.key().as_ref()],
         bump
     )]
@@ -59,13 +57,11 @@ pub struct SwapToRatioRaydiumVaultStrategy<'info> {
     /// Vault strategy Config receives USDC in this account from User's escrow vault
     #[account(
         mut,
-        // seeds = [
-        //     VaultStrategyConfig::VAULT_SWAP_TO_RATIO_USDC_ESCROW_SEED.as_bytes(),
-        //     vault_strategy_config.key().as_ref(),
-        // ],
-        // bump,
-        associated_token::mint = usdc_mint,
-        associated_token::authority = vault_strategy_config,
+        seeds = [
+            VaultStrategyConfig::VAULT_STRATEGY_CFG_USDC_ESCROW_SEED.as_bytes(),
+            vault_strategy_config.key().as_ref(),
+        ],
+        bump,
     )]
     pub vault_strategy_cfg_usdc_escrow: Box<InterfaceAccount<'info, TokenAccount>>,
 
@@ -192,8 +188,6 @@ pub struct SwapToRatioRaydiumVaultStrategy<'info> {
     /// SPL program 2022 for token transfers
     pub token_program_2022: Program<'info, Token2022>,
 
-    pub associated_token_program: Program<'info, AssociatedToken>,
-
     /// memo program
     pub memo_program: Program<'info, Memo>,
 
@@ -213,7 +207,10 @@ impl<'info> SwapToRatioRaydiumVaultStrategy<'info> {
         token_1_amount_out_min: u64,
         remaining_accounts: &[AccountInfo<'info>],
     ) -> Result<()> {
-        // TODO: Check if Strategy is not in Draft/Closed/Paused
+        // require!(
+        //     self.vault_strategy_config.status == VaultStrategyStatus::Active,
+        //     TokenizedVaultsErrorCode::VaultStrategyConfigNotActive
+        // );
 
         let usdc_amount = self
             .invest_reserve_vault
@@ -221,12 +218,13 @@ impl<'info> SwapToRatioRaydiumVaultStrategy<'info> {
             .saturating_mul(self.vault_strategy.percentage as u64)
             .saturating_div(MAX_PERCENTAGE as u64);
 
-        require!(usdc_amount > 0, TokenizedVaultsErrorCode::InvalidAmount);
+        require!(usdc_amount > 0, TokenizedVaultsErrorCode::NoReservedAmount);
 
         msg!("usdc_amount: {}", usdc_amount);
 
         let (usdc_for_token_0_amount, usdc_for_token_1_amount) =
             self.calc_ratio_amounts_for_usdc(usdc_amount)?;
+
         msg!("usdc_for_token_0_amount: {}", usdc_for_token_0_amount);
         msg!("usdc_for_token_1_amount: {}", usdc_for_token_1_amount);
 
@@ -489,10 +487,9 @@ impl<'info> SwapToRatioRaydiumVaultStrategy<'info> {
             vault_amount_1
         );
 
-        // 1/(((current_sqrt_price/(2**64))**2)/10**0)
+        // price_token_0_in_token1 = 1/(((current_sqrt_price/(2**64))**2)/10**delta_decimals)
         // Decode the fixed-point square root price
         let sqrt_price = current_sqrt_price as f64 / (1_u128 << 64) as f64;
-
         let decimal_0 = pool_state.mint_decimals_0;
         let decimal_1 = pool_state.mint_decimals_1;
         let decimals_delta = decimal_0 as i8 - decimal_1 as i8;

@@ -135,5 +135,11 @@ pub enum TokenizedVaultsErrorCode {
     SwapToRatioVaultNotFound,
 
     #[msg("InvestReserveVault already initialized")]
-    InvestReserveVaultAlreadyInitialized
+    InvestReserveVaultAlreadyInitialized,
+
+    #[msg("VaultStrategy is already initialized")]
+    VaultStrategyInitialized,
+
+    #[msg("No reserved amount")]
+    NoReservedAmount,
 }

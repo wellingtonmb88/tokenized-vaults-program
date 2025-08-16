@@ -213,19 +213,18 @@ describe("create-raydium-vault-strategy", () => {
       TOKEN_PROGRAM_ID
     );
 
-    const vault_strategy_cfg_usdc_escrow =
-      await getOrCreateAssociatedTokenAccount(
-        connection as any,
-        creator,
-        USDC,
-        vaultStrategyConfigPda,
-        true,
-        "finalized",
-        { skipPreflight: false },
-        TOKEN_PROGRAM_ID
-      );
+    const vaultStrategyCfgUsdcEscrow = await getOrCreateAssociatedTokenAccount(
+      connection as any,
+      creator,
+      USDC,
+      vaultStrategyConfigPda,
+      true,
+      "finalized",
+      { skipPreflight: false },
+      TOKEN_PROGRAM_ID
+    );
 
-    const [vault_strategy_cfg_mint_0_escrow] = PublicKey.findProgramAddressSync(
+    const [vaultStrategyCfgMint0Escrow] = PublicKey.findProgramAddressSync(
       [
         Buffer.from("vlt_swap_ratio_0_escrow:"),
         vaultStrategyConfigPda.toBuffer(),
@@ -233,7 +232,7 @@ describe("create-raydium-vault-strategy", () => {
       program.programId
     );
 
-    const [vault_strategy_cfg_mint_1_escrow] = PublicKey.findProgramAddressSync(
+    const [vaultStrategyCfgMint1Escrow] = PublicKey.findProgramAddressSync(
       [
         Buffer.from("vlt_swap_ratio_1_escrow:"),
         vaultStrategyConfigPda.toBuffer(),
@@ -241,19 +240,17 @@ describe("create-raydium-vault-strategy", () => {
       program.programId
     );
 
-    const [vault_strategy_cfg_mint_0_fees_escrow] =
-      PublicKey.findProgramAddressSync(
-        [Buffer.from("vlt_fees_0_escrow:"), vaultStrategyConfigPda.toBuffer()],
-        program.programId
-      );
+    const [vaultStrategyCfgMint0FeesEscrow] = PublicKey.findProgramAddressSync(
+      [Buffer.from("vlt_fees_0_escrow:"), vaultStrategyConfigPda.toBuffer()],
+      program.programId
+    );
 
-    const [vault_strategy_cfg_mint_1_fees_escrow] =
-      PublicKey.findProgramAddressSync(
-        [Buffer.from("vlt_fees_1_escrow:"), vaultStrategyConfigPda.toBuffer()],
-        program.programId
-      );
+    const [vaultStrategyCfgMint1FeesEscrow] = PublicKey.findProgramAddressSync(
+      [Buffer.from("vlt_fees_1_escrow:"), vaultStrategyConfigPda.toBuffer()],
+      program.programId
+    );
 
-    const [vault_strategy_cfg_mint_0_perf_fees_escrow] =
+    const [vaultStrategyCfgMint0PerfFeesEscrow] =
       PublicKey.findProgramAddressSync(
         [
           Buffer.from("vlt_perf_fees_0_escrow:"),
@@ -262,7 +259,7 @@ describe("create-raydium-vault-strategy", () => {
         program.programId
       );
 
-    const [vault_strategy_cfg_mint_1_perf_fees_escrow] =
+    const [vaultStrategyCfgMint1PerfFeesEscrow] =
       PublicKey.findProgramAddressSync(
         [
           Buffer.from("vlt_perf_fees_1_escrow:"),
@@ -300,13 +297,13 @@ describe("create-raydium-vault-strategy", () => {
 
         poolStateMint0WithMint1,
         protocolPosition,
-        vault_strategy_cfg_usdc_escrow.address,
-        vault_strategy_cfg_mint_0_escrow,
-        vault_strategy_cfg_mint_1_escrow,
-        vault_strategy_cfg_mint_0_fees_escrow,
-        vault_strategy_cfg_mint_1_fees_escrow,
-        vault_strategy_cfg_mint_0_perf_fees_escrow,
-        vault_strategy_cfg_mint_1_perf_fees_escrow,
+        vaultStrategyCfgUsdcEscrow.address,
+        vaultStrategyCfgMint0Escrow,
+        vaultStrategyCfgMint1Escrow,
+        vaultStrategyCfgMint0FeesEscrow,
+        vaultStrategyCfgMint1FeesEscrow,
+        vaultStrategyCfgMint0PerfFeesEscrow,
+        vaultStrategyCfgMint1PerfFeesEscrow,
         bitmapExtMint0WithMint1,
       ],
     });
@@ -315,7 +312,6 @@ describe("create-raydium-vault-strategy", () => {
     try {
       const createVaultStrategyIx = await program.methods
         .createRaydiumVaultStrategy(
-          strategyConfigName,
           strategyId,
           percentage,
           amount_0_max,
@@ -325,10 +321,12 @@ describe("create-raydium-vault-strategy", () => {
           tickArrayLowerStartIndex,
           tickArrayUpperStartIndex,
           PYTH_SOL_USD_FEED_ID,
-          PYTH_USDC_USD_FEED_ID
+          PYTH_USDC_USD_FEED_ID,
+          lookupTableAccount.key
         )
         .accounts({
           creator: creator.publicKey,
+          vaultStrategyConfig: vaultStrategyConfigPda,
           raydiumPositionNftMint: RAYDIUM_POSITION_NFT.publicKey,
           raydiumPositionNftAccount: positionNftAccount,
           raydiumPoolState: poolStateMint0WithMint1,

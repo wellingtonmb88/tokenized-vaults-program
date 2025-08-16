@@ -9,10 +9,6 @@ pub struct InvestorStrategyPosition {
     pub vault_strategy_key: Pubkey,
     pub shares: u64,
     pub assets: u64,
-    #[max_len(5)]
-    last_reward_indexes: Vec<u128>,
-    #[max_len(5)]
-    rewards_amount_owed: Vec<u64>,
     pub bump: u8,
 }
 
@@ -33,8 +29,6 @@ impl InvestorStrategyPosition {
     ) -> Result<()> {
         self.authority = authority;
         self.vault_strategy_key = vault_strategy_key;
-        self.last_reward_indexes = Vec::new();
-        self.rewards_amount_owed = Vec::new();
         self.bump = bump;
         self.deposit_assets(assets, total_vault_assets, total_vault_shares)
     }
