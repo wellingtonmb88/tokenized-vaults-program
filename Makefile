@@ -62,6 +62,14 @@ integration-localnet-create_raydium_vault_strategy:
 	make set-config-localnet
 	export ENV=localnet && make integration-create_raydium_vault_strategy
 
+integration-localnet-activate_vault_strategy_config:
+	make set-config-localnet
+	export ENV=localnet && make integration-activate_vault_strategy_config
+
+integration-localnet-deposit_to_escrow:
+	make set-config-localnet
+	export ENV=localnet && make integration-deposit_to_escrow
+
 integration-localnet-add_liquidity_raydium_vault_strategy:
 	make set-config-localnet
 	export ENV=localnet && make integration-add_liquidity_raydium_vault_strategy
@@ -95,6 +103,14 @@ integration-devnet-create_raydium_vault_strategy:
 	make set-config-devnet
 	export ENV=devnet && make integration-create_raydium_vault_strategy
 
+integration-devnet-activate_vault_strategy_config:
+	make set-config-devnet
+	export ENV=devnet && make integration-activate_vault_strategy_config
+
+integration-devnet-deposit_to_escrow:
+	make set-config-devnet
+	export ENV=devnet && make integration-deposit_to_escrow
+
 integration-devnet-add_liquidity_raydium_vault_strategy:
 	make set-config-devnet
 	export ENV=devnet && make integration-add_liquidity_raydium_vault_strategy
@@ -114,6 +130,12 @@ integration-create_vault_strategy_config:
 
 integration-create_raydium_vault_strategy:
 	yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/integration/creator/create_raydium_vault_strategy.test.ts
+
+integration-activate_vault_strategy_config:
+	yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/integration/creator/activate_vault_strategy_config.test.ts
+
+integration-deposit_to_escrow:
+	yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/integration/investor/deposit_to_escrow.test.ts
 
 integration-add_liquidity_raydium_vault_strategy: 
 	yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/integration/investor/add_liquidity_raydium_vault_strategy.test.ts

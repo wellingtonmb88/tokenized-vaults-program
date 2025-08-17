@@ -145,4 +145,10 @@ pub enum TokenizedVaultsErrorCode {
 
     #[msg("Invalid remove percentage")]
     InvalidRemovePercentage,
+
+    #[msg("VaultStrategyConfig has no strategies configured")]
+    VaultStrategyConfigNoStrategies,
+
+    #[msg("Unauthorized")]
+    Unauthorized,
 }
