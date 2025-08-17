@@ -1,250 +1,134 @@
-import * as anchor from '@coral-xyz/anchor'
-import { BN, Program } from '@coral-xyz/anchor'
-import { TokenizedVaultsProgram } from '../../../target/types/tokenized_vaults_program'
+import * as anchor from "@coral-xyz/anchor";
+import { Program } from "@coral-xyz/anchor";
+import { TokenizedVaultsProgram } from "../../../target/types/tokenized_vaults_program";
 import {
   PublicKey,
   LAMPORTS_PER_SOL,
-  Transaction,
   sendAndConfirmTransaction,
-} from '@solana/web3.js'
-import {
-  createTransferInstruction,
-  getOrCreateAssociatedTokenAccount,
-} from '@solana/spl-token'
-import { expect } from 'chai'
+  Transaction,
+} from "@solana/web3.js";
+import { expect } from "chai";
 import {
   _creatorWallet,
   _masterWallet,
   connection,
   setupDotEnv,
-} from '../../../app/config'
-import { USDC } from '../../../app/constants'
-import { airdrop } from '../../../app/utils'
+} from "../../../app/config";
+import { airdrop } from "../../../app/utils";
+import { depositToEscrowTx } from "../../../app/web/investor/deposit-to-escrow";
+import { USDC } from "../../../app/constants";
+import {
+  createTransferInstruction,
+  getOrCreateAssociatedTokenAccount,
+} from "@solana/spl-token";
+import { getProgramId } from "../../../app/web/program";
 
-setupDotEnv()
+setupDotEnv();
 
-describe('deposit-to-escrow', () => {
-  const investor = _creatorWallet
-  const fundingWallet = _masterWallet
+describe("deposit-to-escrow", () => {
+  const creator = _creatorWallet;
 
+  // Get the provider and connection objects
   const provider = new anchor.AnchorProvider(
     connection as any,
-    new anchor.Wallet(investor as any),
+    new anchor.Wallet(creator as any),
     {
-      commitment: 'confirmed',
+      commitment: "confirmed",
     }
-  )
-  anchor.setProvider(provider)
+  );
+  anchor.setProvider(provider);
 
-  const program = anchor.workspace
-    .tokenizedVaultsProgram as Program<TokenizedVaultsProgram>
-  const programId = program.programId
-
-  const [escrowVaultPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('investr_escr_vlt:'), investor.publicKey.toBuffer()],
-    programId
-  )
-
+  // Airdrop SOL to admin account for pay transactions fees.
   before(async () => {
-    console.log('Running tests on ', process.env.ENV)
-    console.log('Investor address:', investor.publicKey.toString())
-    console.log('Funding wallet address:', fundingWallet.publicKey.toString())
+    console.log("Running tests on ", process.env.ENV);
+    console.log("Admin address:", creator.publicKey.toString());
 
-    const investorBalance = await connection.getBalance(investor.publicKey)
-    const fundingBalance = await connection.getBalance(fundingWallet.publicKey)
+    // Check existing balance first
+    const adminBalance = await connection.getBalance(creator.publicKey);
+    console.log("Admin balance:", adminBalance / LAMPORTS_PER_SOL, "SOL");
 
-    console.log('Investor balance:', investorBalance / LAMPORTS_PER_SOL, 'SOL')
-    console.log('Funding balance:', fundingBalance / LAMPORTS_PER_SOL, 'SOL')
-
-    if (investorBalance < LAMPORTS_PER_SOL) {
+    // Only airdrop if balance is insufficient
+    if (adminBalance < LAMPORTS_PER_SOL) {
       await airdrop(
         connection as any,
-        investor.publicKey,
+        creator.publicKey,
         200 * LAMPORTS_PER_SOL
-      )
+      );
     }
+  });
 
-    if (fundingBalance < LAMPORTS_PER_SOL) {
-      await airdrop(
-        connection as any,
-        fundingWallet.publicKey,
-        200 * LAMPORTS_PER_SOL
-      )
-    }
-  })
+  it("Deposit to Escrow", async () => {
+    const amount = 100; // 100 USDC
+    const programId = getProgramId();
 
-  it('Deposit USDC to Investor Escrow', async () => {
-    const depositAmount = 100 * 1e6 // 100 USDC
+    const [escrowVaultPda] = PublicKey.findProgramAddressSync(
+      [Buffer.from("escrow_vault:"), creator.publicKey.toBuffer()],
+      programId
+    );
 
-    const investorTokenAccount = await getOrCreateAssociatedTokenAccount(
+    let investorTokenAccount = await getOrCreateAssociatedTokenAccount(
       connection as any,
-      investor,
+      creator,
       USDC,
-      investor.publicKey,
+      creator.publicKey,
       false,
-      'finalized'
-    )
+      "finalized"
+    );
 
-    const fundingTokenAccount = await getOrCreateAssociatedTokenAccount(
+    let masterWalletUSDCATA = await getOrCreateAssociatedTokenAccount(
       connection as any,
-      fundingWallet,
+      _masterWallet,
       USDC,
-      fundingWallet.publicKey,
+      _masterWallet.publicKey,
       false,
-      'finalized'
-    )
+      "finalized"
+    );
 
     console.log(
-      'Investor USDC account:',
-      investorTokenAccount.address.toBase58(),
-      'balance:',
+      "investorTokenAccount:",
       investorTokenAccount.amount.toString()
-    )
-
+    );
     try {
-      const escrowBalanceBefore =
-        await connection.getTokenAccountBalance(escrowVaultPda)
+      const escrowVaultPdaBalance =
+        await connection.getTokenAccountBalance(escrowVaultPda);
       console.log(
-        'Escrow balance before:',
-        escrowBalanceBefore.value.uiAmount,
-        'USDC'
-      )
+        "Before escrowVaultPda Account Balance:",
+        escrowVaultPdaBalance.value
+      );
     } catch (error) {
-      console.log("Escrow account doesn't exist yet - will be created")
+      console.error("Error fetching escrowVaultPda balance:", error);
     }
 
-    const depositToEscrowIx = await program.methods
-      .depositToEscrow(new BN(depositAmount))
-      .accounts({
-        investor: investor.publicKey,
-        usdcMint: USDC,
-      })
-      .signers([investor])
-      .instruction()
+    const _depositToEscrowTx = await depositToEscrowTx({
+      provider,
+      investor: creator.publicKey,
+      amount,
+    });
 
-    const tx = new Transaction().add(
+    let tx = new Transaction().add(
       createTransferInstruction(
-        fundingTokenAccount.address,
+        masterWalletUSDCATA.address,
         investorTokenAccount.address,
-        fundingWallet.publicKey,
-        depositAmount
+        _masterWallet.publicKey,
+        100 * 1e6
       ),
-      depositToEscrowIx
-    )
+      ..._depositToEscrowTx.instructions
+    );
 
     const txSignature = await sendAndConfirmTransaction(
       connection as any,
-      tx,
-      [investor, fundingWallet],
-      { commitment: 'finalized' }
-    )
+      tx as any,
+      [creator, _masterWallet],
+      {
+        skipPreflight: false,
+        preflightCommitment: "finalized",
+      }
+    );
 
-    console.log(`Deposit transaction signature: ${txSignature}`)
+    console.log(`Transaction signature: ${txSignature}`);
 
-    const investorBalanceAfter = await connection.getTokenAccountBalance(
-      investorTokenAccount.address
-    )
-    console.log(
-      'Investor USDC balance after:',
-      investorBalanceAfter.value.uiAmount,
-      'USDC'
-    )
+    const balance = await connection.getTokenAccountBalance(escrowVaultPda);
 
-    try {
-      const escrowBalanceAfter =
-        await connection.getTokenAccountBalance(escrowVaultPda)
-      console.log(
-        'Escrow balance after:',
-        escrowBalanceAfter.value.uiAmount,
-        'USDC'
-      )
-
-      expect(escrowBalanceAfter.value.uiAmount).to.equal(100) // 100 USDC
-    } catch (error) {
-      console.log('Escrow account check failed:', error.message)
-      console.log('Transaction succeeded - deposit completed')
-    }
-
-    expect(investorBalanceAfter.value.uiAmount).to.be.greaterThan(99900)
-  })
-
-  it('Make additional deposit to existing escrow', async () => {
-    const additionalDepositAmount = 50 * 1e6 // 50 USDC
-
-    const investorTokenAccount = await getOrCreateAssociatedTokenAccount(
-      connection as any,
-      investor,
-      USDC,
-      investor.publicKey,
-      false,
-      'finalized'
-    )
-
-    const fundingTokenAccount = await getOrCreateAssociatedTokenAccount(
-      connection as any,
-      fundingWallet,
-      USDC,
-      fundingWallet.publicKey,
-      false,
-      'finalized'
-    )
-
-    try {
-      const escrowBalanceBefore =
-        await connection.getTokenAccountBalance(escrowVaultPda)
-      console.log(
-        'Escrow balance before additional deposit:',
-        escrowBalanceBefore.value.uiAmount,
-        'USDC'
-      )
-    } catch (error) {
-      console.log('Could not fetch escrow balance before additional deposit')
-    }
-
-    const depositToEscrowIx = await program.methods
-      .depositToEscrow(new BN(additionalDepositAmount))
-      .accounts({
-        investor: investor.publicKey,
-        usdcMint: USDC,
-      })
-      .signers([investor])
-      .instruction()
-
-    const tx = new Transaction().add(
-      createTransferInstruction(
-        fundingTokenAccount.address,
-        investorTokenAccount.address,
-        fundingWallet.publicKey,
-        additionalDepositAmount
-      ),
-      depositToEscrowIx
-    )
-
-    const txSignature = await sendAndConfirmTransaction(
-      connection as any,
-      tx,
-      [investor, fundingWallet],
-      { commitment: 'finalized' }
-    )
-
-    console.log(`Additional deposit transaction signature: ${txSignature}`)
-
-    try {
-      const escrowBalanceAfter =
-        await connection.getTokenAccountBalance(escrowVaultPda)
-      console.log(
-        'Escrow balance after additional deposit:',
-        escrowBalanceAfter.value.uiAmount,
-        'USDC'
-      )
-
-      expect(escrowBalanceAfter.value.uiAmount).to.equal(150) // 100 + 50 = 150 USDC
-    } catch (error) {
-      console.log(
-        'Escrow account check failed on second deposit:',
-        error.message
-      )
-      console.log('Additional deposit transaction succeeded')
-    }
-  })
-})
+    expect(balance.value.amount).to.equal(amount * 1e6);
+  });
+});
