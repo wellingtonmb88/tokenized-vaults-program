@@ -71,12 +71,12 @@ impl InvestorStrategyPosition {
         total_vault_assets: u64,
         total_vault_shares: u64,
     ) -> Result<()> {
-        self.shares = self.shares.saturating_sub(shares);
         self.assets = self.assets.saturating_sub(self.convert_shares_to_assets(
             shares,
             total_vault_assets,
             total_vault_shares,
         )?);
+        self.shares = self.shares.saturating_sub(shares);
 
         emit!(InvestorStrategyPositionEvent {
             authority: self.authority,
@@ -132,22 +132,14 @@ impl InvestorStrategyPosition {
         total_vault_assets: u64,
         total_vault_shares: u64,
     ) -> Result<u64> {
-        if self.shares == 0 {
-            Ok(0)
-        } else {
-            require!(
-                self.shares >= shares,
-                TokenizedVaultsErrorCode::InsufficientShares
-            );
-            // assets = (shares_resgatadas * total_assets) / total_shares
-            let assets = (shares as u128)
-                .checked_mul(total_vault_assets as u128)
-                .ok_or(TokenizedVaultsErrorCode::MathOverflow)?
-                .checked_div(total_vault_shares as u128)
-                .ok_or(TokenizedVaultsErrorCode::MathOverflow)?;
+        // assets = (shares_resgatadas * total_assets) / total_shares
+        let assets = (shares as u128)
+            .checked_mul(total_vault_assets as u128)
+            .ok_or(TokenizedVaultsErrorCode::MathOverflow)?
+            .checked_div(total_vault_shares as u128)
+            .ok_or(TokenizedVaultsErrorCode::MathOverflow)?;
 
-            Ok(assets as u64)
-        }
+        Ok(assets as u64)
     }
 }
 

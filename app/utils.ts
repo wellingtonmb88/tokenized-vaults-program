@@ -132,6 +132,7 @@ export const createLookUpTable = async ({
   reuseTable?: PublicKey;
 }) => {
   if (!reuseTable) {
+    console.log("Creating new lookup table...");
     const slot = await connection.getSlot();
     const [lookupTableInst, lookupTableAddress] =
       anchor.web3.AddressLookupTableProgram.createLookupTable({
@@ -139,12 +140,6 @@ export const createLookUpTable = async ({
         payer: payer.publicKey,
         recentSlot: slot - 1,
       });
-
-    console.log(
-      "\n Created lookup table with address:",
-      lookupTableAddress.toBase58()
-    );
-    console.log();
 
     let blockhash = await connection
       .getLatestBlockhash()
@@ -172,22 +167,31 @@ export const createLookUpTable = async ({
     const txId = await connection.sendTransaction(transaction, {
       skipPreflight: false,
       preflightCommitment: "finalized",
+      // maxRetries: 3,
     });
 
     await confirmTransaction(connection as any, txId, "finalized");
-    await sleep(1000);
-    console.log();
     console.log(
       "LookUpTable",
       `https://explorer.solana.com/tx/${txId}?cluster=custom&customUrl=http://localhost:8899`
     );
     console.log();
 
+    console.log(
+      "Created lookup table with address:",
+      lookupTableAddress.toBase58()
+    );
+    console.log();
+    await sleep(1000);
     const lookupTableAccount = (
       await connection.getAddressLookupTable(lookupTableAddress, {
         commitment: "confirmed",
       })
     ).value;
+
+    if (!lookupTableAccount) {
+      throw new Error("Failed to fetch lookup table account after creation");
+    }
 
     return { lookupTableAddress, lookupTableAccount };
   } else {
@@ -209,8 +213,8 @@ export const createLookUpTableIx = async ({
   reuseTable,
 }: {
   connection: anchor.web3.Connection;
-  payer: Keypair;
-  authority: Keypair;
+  payer: PublicKey;
+  authority: PublicKey;
   addresses: PublicKey[];
   reuseTable?: PublicKey;
 }) => {
@@ -218,8 +222,8 @@ export const createLookUpTableIx = async ({
     const slot = await connection.getSlot();
     const [lookupTableInst, lookupTableAddress] =
       anchor.web3.AddressLookupTableProgram.createLookupTable({
-        authority: authority.publicKey,
-        payer: payer.publicKey,
+        authority: authority,
+        payer: payer,
         recentSlot: slot - 1,
       });
 
@@ -229,23 +233,23 @@ export const createLookUpTableIx = async ({
     );
     console.log();
 
-    let blockhash = await connection
-      .getLatestBlockhash()
-      .then((res) => res.blockhash);
+    // let blockhash = await connection
+    //   .getLatestBlockhash()
+    //   .then((res) => res.blockhash);
 
     const extendInstruction =
       anchor.web3.AddressLookupTableProgram.extendLookupTable({
-        payer: payer.publicKey,
-        authority: authority.publicKey,
+        payer: payer,
+        authority: authority,
         lookupTable: lookupTableAddress,
         addresses,
       });
 
-    const messageV0 = new web3.TransactionMessage({
-      payerKey: payer.publicKey,
-      recentBlockhash: blockhash,
-      instructions: [lookupTableInst, extendInstruction],
-    }).compileToV0Message();
+    // const messageV0 = new web3.TransactionMessage({
+    //   payerKey: payer.publicKey,
+    //   recentBlockhash: blockhash,
+    //   instructions: [lookupTableInst, extendInstruction],
+    // }).compileToV0Message();
 
     // const transaction = new web3.VersionedTransaction(messageV0);
 
@@ -272,7 +276,10 @@ export const createLookUpTableIx = async ({
     //   })
     // ).value;
 
-    return { instructions: [lookupTableInst, extendInstruction] };
+    return {
+      lookupTableAddress,
+      instructions: [lookupTableInst, extendInstruction],
+    };
   } else {
     const lookupTableAccount = (
       await connection.getAddressLookupTable(reuseTable, {

@@ -9,16 +9,15 @@ import {
 import { expect } from "chai";
 import { _creatorWallet, connection, setupDotEnv } from "../../../app/config";
 import { VAULT_STRATEGY_CONFIG_NAME } from "../constants";
-import { USDC } from "../../../app/constants";
 import { airdrop } from "../../../app/utils";
+import {
+  createVaultStrategyConfigTx,
+  VaultStrategyType,
+} from "../../../app/web/creator/create-vault-strategy-config";
 
 setupDotEnv();
 
 describe("init-vault-strategy-config", () => {
-  // Configure the client to use devnet
-  // const provider = anchor.AnchorProvider.env();
-  // anchor.setProvider(provider);
-
   const creator = _creatorWallet;
 
   // Get the provider and connection objects
@@ -67,16 +66,13 @@ describe("init-vault-strategy-config", () => {
   it("Init Vault Strategy Config", async () => {
     const performanceFee = 100_000; // 10% basis points
 
-    const tx = await program.methods
-      .initVaultStrategyConfig(VAULT_STRATEGY_CONFIG_NAME, performanceFee, {
-        conservative: {},
-      })
-      .accounts({
-        creator: creator.publicKey,
-        usdcMint: USDC,
-      })
-      .signers([creator])
-      .transaction();
+    const tx = await createVaultStrategyConfigTx({
+      provider,
+      creator: creator.publicKey,
+      vaultStrategyName: VAULT_STRATEGY_CONFIG_NAME,
+      performanceFee,
+      vaultStrategyType: VaultStrategyType.Conservative,
+    });
 
     const txSignature = await sendAndConfirmTransaction(
       connection as any,
