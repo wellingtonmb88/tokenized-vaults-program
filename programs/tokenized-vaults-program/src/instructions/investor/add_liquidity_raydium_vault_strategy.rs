@@ -10,19 +10,19 @@ use crate::utils::transfer_token;
 use anchor_spl::token_2022::Token2022;
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
 use num_bigint::BigInt;
+use raydium_clmm_cpi::cpi;
 use raydium_clmm_cpi::cpi::accounts::SwapSingleV2;
 use raydium_clmm_cpi::program::RaydiumClmm;
 use raydium_clmm_cpi::states::{
     AmmConfig, ObservationState, PersonalPositionState, PoolState, POSITION_SEED,
 };
-use raydium_clmm_cpi::{cpi, ID as RAYDIUM_CLMM_ID};
 
 use crate::error::TokenizedVaultsErrorCode;
 use crate::{
     get_delta_amounts_signed, get_liquidity_from_amount_0, get_liquidity_from_amount_1,
     get_liquidity_from_amounts, vault_strategy_config, InvestReserveVault, InvestorEscrow,
     InvestorStrategyPosition, SwapToRatioVault, VaultStrategy, VaultStrategyConfig,
-    DENOMINATOR_MULTIPLIER, MAX_PERCENTAGE, U256, USDC_MINT,
+    DENOMINATOR_MULTIPLIER, MAX_PERCENTAGE, RAYDIUM_CLMM_ID, U256, USDC_MINT,
 };
 
 #[derive(Accounts)]

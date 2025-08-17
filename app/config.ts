@@ -9,7 +9,9 @@ export const setupDotEnv = () => {
   dotenv.config({
     path: path.resolve(
       __dirname,
-      process.env.ENV == "devnet" ? "../.env.test.devnet" : "../.env.test.localnet"
+      process.env.ENV == "devnet"
+        ? "../.env.test.devnet"
+        : "../.env.test.localnet"
     ),
   });
 };
@@ -80,6 +82,9 @@ export const initSdkWithoutOwner = async (params?: { loadToken?: boolean }) => {
   raydium = await Raydium.load({
     connection: connection as any,
     cluster,
+    urlConfigs: {
+      BASE_HOST: process.env.RAYDIUM_API,
+    },
     disableFeatureCheck: true,
     disableLoadToken: !params?.loadToken,
     blockhashCommitment: "finalized",

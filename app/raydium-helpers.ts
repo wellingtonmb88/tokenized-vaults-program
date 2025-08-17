@@ -10,7 +10,16 @@ import {
   getTickArrayBitmapAddress,
   i32ToBytes,
 } from "./utils";
-import { CLMM_PROGRAM_ID, USDC } from "./constants";
+import { getTokens } from "./web/tokens";
+import { CLMM_PROGRAM_ID } from "./constants";
+
+export const raydiumAmmConfig = () => {
+  if (process.env.ENV == "devnet") {
+    return new PublicKey("CQYbhr6amxUER4p5SC44C63R4qw4NFc9Z4Db9vF4tZwG");
+  } else {
+    return new PublicKey("9iFER3bpjf1PTTCQCfTRu17EJgvsxo9pVyA9QWwEuX4x");
+  }
+};
 
 export const raydiumPools = ({
   ammConfig,
@@ -56,6 +65,8 @@ export const raydiumTokenVaults = ({
   mint0: PublicKey;
   mint1: PublicKey;
 }) => {
+  const { USDC } = getTokens();
+
   const { mint0, mint1, poolStateMint0WithMint1 } = raydiumPools({
     ammConfig,
     mint0: _mint0,
@@ -154,6 +165,8 @@ export const raydiumPDAs = async ({
   mint0: PublicKey;
   mint1: PublicKey;
 }) => {
+  const { USDC } = getTokens();
+
   const { mint0, mint1, poolStateMint0WithMint1 } = raydiumPools({
     ammConfig,
     mint0: _mint0,
@@ -284,6 +297,7 @@ export const observationIds = async ({
   mint0: PublicKey;
   mint1: PublicKey;
 }) => {
+  const { USDC } = getTokens();
   const { poolStateMint0WithMint1 } = raydiumPools({
     ammConfig,
     mint0,

@@ -176,16 +176,16 @@ const run = async () => {
 
     console.log("Creating position for Pool ");
     const inputAmount = 50000; // MintA amount
-    // await createPosition(raydium, poolIdA, inputAmount).catch(console.error);
-    // await createPosition(raydium, poolIdB, inputAmount).catch(console.error);
-    // await createPosition(raydium, poolIdC, inputAmount).catch(console.error);
+    await createPosition(raydium, poolIdA, inputAmount).catch(console.error);
+    await createPosition(raydium, poolIdB, inputAmount).catch(console.error);
+    await createPosition(raydium, poolIdC, inputAmount).catch(console.error);
     // await createPosition(raydium, "CTBsu4QkD6XpCfQMbkTXfYRXu6tmT8K1J9nUFbHdsL4c", inputAmount).catch(console.error);
     // await createPosition(raydium, "BYsxZtgTDuq3ACvQSoDwVXzoCc4NEyc6JZYc4PMLEGrC", inputAmount).catch(console.error);
-    await createPosition(
-      raydium,
-      "6WZxvb9wgVGWf8QqT5mYErvB5wR2Kz17JLn45WCMTm5P",
-      inputAmount
-    ).catch(console.error);
+    // await createPosition(
+    //   raydium,
+    //   "6WZxvb9wgVGWf8QqT5mYErvB5wR2Kz17JLn45WCMTm5P",
+    //   inputAmount
+    // ).catch(console.error);
   } else {
     const inputAmount = 5; // MintA amount
     await createPosition(
