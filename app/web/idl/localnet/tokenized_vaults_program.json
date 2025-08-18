@@ -1,5 +1,5 @@
 {
-  "address": "YyUUJsRpeJ5fJEL6JBD7LKibaK43LXov4FzHs2w53J4",
+  "address": "9Vkq9WYEQVocQuPb4yuAQSfgxPwcmx9vsTmcbFcitz7X",
   "metadata": {
     "name": "tokenized_vaults_program",
     "version": "0.1.0",
@@ -230,7 +230,7 @@
         },
         {
           "name": "raydium_clmm_program",
-          "address": "CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK"
+          "address": "devi51mZmdwUJGU9hjN27vEz64Gps7uUefqxg27EAtH"
         },
         {
           "name": "raydium_position_nft_account",
@@ -686,7 +686,7 @@
         },
         {
           "name": "raydium_clmm_program",
-          "address": "CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK"
+          "address": "devi51mZmdwUJGU9hjN27vEz64Gps7uUefqxg27EAtH"
         },
         {
           "name": "raydium_position_nft_mint",
@@ -1917,7 +1917,7 @@
         },
         {
           "name": "raydium_clmm_program",
-          "address": "CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK"
+          "address": "devi51mZmdwUJGU9hjN27vEz64Gps7uUefqxg27EAtH"
         },
         {
           "name": "raydium_position_nft_account",
@@ -2273,7 +2273,7 @@
         },
         {
           "name": "raydium_clmm_program",
-          "address": "CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK"
+          "address": "devi51mZmdwUJGU9hjN27vEz64Gps7uUefqxg27EAtH"
         },
         {
           "name": "raydium_pool_state",

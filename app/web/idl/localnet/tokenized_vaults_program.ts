@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/tokenized_vaults_program.json`.
  */
 export type TokenizedVaultsProgram = {
-  "address": "YyUUJsRpeJ5fJEL6JBD7LKibaK43LXov4FzHs2w53J4",
+  "address": "9Vkq9WYEQVocQuPb4yuAQSfgxPwcmx9vsTmcbFcitz7X",
   "metadata": {
     "name": "tokenizedVaultsProgram",
     "version": "0.1.0",
@@ -236,7 +236,7 @@ export type TokenizedVaultsProgram = {
         },
         {
           "name": "raydiumClmmProgram",
-          "address": "CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK"
+          "address": "devi51mZmdwUJGU9hjN27vEz64Gps7uUefqxg27EAtH"
         },
         {
           "name": "raydiumPositionNftAccount",
@@ -692,7 +692,7 @@ export type TokenizedVaultsProgram = {
         },
         {
           "name": "raydiumClmmProgram",
-          "address": "CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK"
+          "address": "devi51mZmdwUJGU9hjN27vEz64Gps7uUefqxg27EAtH"
         },
         {
           "name": "raydiumPositionNftMint",
@@ -1923,7 +1923,7 @@ export type TokenizedVaultsProgram = {
         },
         {
           "name": "raydiumClmmProgram",
-          "address": "CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK"
+          "address": "devi51mZmdwUJGU9hjN27vEz64Gps7uUefqxg27EAtH"
         },
         {
           "name": "raydiumPositionNftAccount",
@@ -2279,7 +2279,7 @@ export type TokenizedVaultsProgram = {
         },
         {
           "name": "raydiumClmmProgram",
-          "address": "CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK"
+          "address": "devi51mZmdwUJGU9hjN27vEz64Gps7uUefqxg27EAtH"
         },
         {
           "name": "raydiumPoolState",

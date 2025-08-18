@@ -155,7 +155,6 @@ const run = async () => {
       USDC,
       100_000
     );
-
     const poolIdA = await createPool(
       raydium,
       USDC.toBase58(),

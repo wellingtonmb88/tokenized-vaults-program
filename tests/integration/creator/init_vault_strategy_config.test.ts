@@ -64,7 +64,7 @@ describe("init-vault-strategy-config", () => {
   });
 
   it("Init Vault Strategy Config", async () => {
-    const performanceFee = 100_000; // 10% basis points
+    const performanceFee = 300_000; // 10% basis points
 
     const tx = await createVaultStrategyConfigTx({
       provider,
@@ -80,7 +80,7 @@ describe("init-vault-strategy-config", () => {
       [creator],
       {
         skipPreflight: false,
-        preflightCommitment: "finalized",
+        preflightCommitment: "confirmed",
       }
     );
 
