@@ -1,2 +1,2 @@
 
-export const VAULT_STRATEGY_CONFIG_NAME = "SOL-USDC Strategy 0";
+export const VAULT_STRATEGY_CONFIG_NAME = "Apple/Google Strategy Vault";

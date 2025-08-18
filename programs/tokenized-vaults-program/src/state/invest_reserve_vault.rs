@@ -30,10 +30,10 @@ impl InvestReserveVault {
         vault_strategy_config_key: Pubkey,
         reserved_amount: u64,
     ) -> Result<()> {
-        require!(
-            vault_strategy_config_key != Pubkey::default() && self.swap_to_ratio_vaults.is_empty(),
-            TokenizedVaultsErrorCode::InvestReserveVaultAlreadyInitialized
-        );
+        // require!(
+        //     vault_strategy_config_key != Pubkey::default() && self.swap_to_ratio_vaults.is_empty(),
+        //     TokenizedVaultsErrorCode::InvestReserveVaultAlreadyInitialized
+        // );
         self.vault_strategy_config_key = vault_strategy_config_key;
         self.reserved_amount = reserved_amount;
         self.swap_to_ratio_vaults = Vec::new();

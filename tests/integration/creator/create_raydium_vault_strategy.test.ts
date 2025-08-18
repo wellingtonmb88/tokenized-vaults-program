@@ -142,7 +142,8 @@ describe("create-raydium-vault-strategy", () => {
       vaultStrategyPda,
       investorStrategyPositionPda,
     } = protocolPDAs({
-      creator: creator.publicKey,
+      strategyCreator: creator.publicKey,
+      investor: creator.publicKey,
       strategyConfigName,
       strategyId,
       mint0,

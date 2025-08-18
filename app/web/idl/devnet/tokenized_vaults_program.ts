@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/tokenized_vaults_program.json`.
  */
 export type TokenizedVaultsProgram = {
-  "address": "YyUUJsRpeJ5fJEL6JBD7LKibaK43LXov4FzHs2w53J4",
+  "address": "9Vkq9WYEQVocQuPb4yuAQSfgxPwcmx9vsTmcbFcitz7X",
   "metadata": {
     "name": "tokenizedVaultsProgram",
     "version": "0.1.0",
