@@ -17,7 +17,7 @@ pub use asserts::*;
 pub mod libraries;
 pub use libraries::*;
 
-declare_id!("YyUUJsRpeJ5fJEL6JBD7LKibaK43LXov4FzHs2w53J4");
+declare_id!("9Vkq9WYEQVocQuPb4yuAQSfgxPwcmx9vsTmcbFcitz7X");
 
 #[program]
 pub mod tokenized_vaults_program {

@@ -26,7 +26,7 @@ export const depositToEscrowTx = async ({
     })
     .transaction();
 
-  console.log("Transaction raw size", tx.serialize().length);
+  // console.log("Transaction raw size", tx.serialize().length);
 
   return tx;
 };

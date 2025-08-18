@@ -7,10 +7,10 @@ resolution = true
 skip-lint = false
 
 [programs.devnet]
-tokenized_vaults_program = "YyUUJsRpeJ5fJEL6JBD7LKibaK43LXov4FzHs2w53J4"
+tokenized_vaults_program = "9Vkq9WYEQVocQuPb4yuAQSfgxPwcmx9vsTmcbFcitz7X"
 
 [programs.localnet]
-tokenized_vaults_program = "YyUUJsRpeJ5fJEL6JBD7LKibaK43LXov4FzHs2w53J4"
+tokenized_vaults_program = "9Vkq9WYEQVocQuPb4yuAQSfgxPwcmx9vsTmcbFcitz7X"
 
 [registry]
 url = "https://api.apr.dev"
