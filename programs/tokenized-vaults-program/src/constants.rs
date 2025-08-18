@@ -46,15 +46,16 @@ pub const DISC_INIT_PROTOCOL_CONFIG_IX: &[u8] = &[0];
 pub const DISC_PAUSE_PROTOCOL_IX: &[u8] = &[1];
 pub const DISC_UNPAUSE_PROTOCOL_IX: &[u8] = &[2];
 pub const DISC_INIT_VAULT_STRATEGY_CONFIG_IX: &[u8] = &[3];
-pub const DISC_CREATE_RAYDIUM_VAULT_STRATEGY_IX: &[u8] = &[4];
-pub const DISC_DEPOSIT_TO_ESCROW_IX: &[u8] = &[5];
-pub const DISC_WITHDRAW_FROM_ESCROW_IX: &[u8] = &[6];
-pub const DISC_PAUSE_VAULT_IX: &[u8] = &[7];
-pub const DISC_UNPAUSE_VAULT_IX: &[u8] = &[8];
-pub const DISC_INVEST_RESERVE_IX: &[u8] = &[9];
-pub const DISC_SWAP_TO_RATIO_RAYDIUM_VAULT_STRATEGY_IX: &[u8] = &[10];
-pub const DISC_ADD_LIQUIDITY_RAYDIUM_VAULT_STRATEGY_IX: &[u8] = &[11];
-pub const DISC_REMOVE_LIQUIDITY_RAYDIUM_VAULT_STRATEGY_IX: &[u8] = &[12];
+pub const DISC_ACTIVATE_VAULT_STRATEGY_CONFIG_IX: &[u8] = &[4];
+pub const DISC_CREATE_RAYDIUM_VAULT_STRATEGY_IX: &[u8] = &[5];
+pub const DISC_DEPOSIT_TO_ESCROW_IX: &[u8] = &[6];
+pub const DISC_WITHDRAW_FROM_ESCROW_IX: &[u8] = &[7];
+pub const DISC_PAUSE_VAULT_IX: &[u8] = &[8];
+pub const DISC_UNPAUSE_VAULT_IX: &[u8] = &[9];
+pub const DISC_INVEST_RESERVE_IX: &[u8] = &[10];
+pub const DISC_SWAP_TO_RATIO_RAYDIUM_VAULT_STRATEGY_IX: &[u8] = &[11];
+pub const DISC_ADD_LIQUIDITY_RAYDIUM_VAULT_STRATEGY_IX: &[u8] = &[12];
+pub const DISC_REMOVE_LIQUIDITY_RAYDIUM_VAULT_STRATEGY_IX: &[u8] = &[13];
 
 pub const DENOMINATOR_MULTIPLIER: u64 = 1_000_000_000;
 

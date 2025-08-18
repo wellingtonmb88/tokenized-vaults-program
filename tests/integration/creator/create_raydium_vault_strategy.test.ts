@@ -109,8 +109,8 @@ describe("create-raydium-vault-strategy", () => {
 
   it("Creates Raydium Vault strategy", async () => {
     // Strategy parameters
-    const percentage = 100 * 10_000; // 25% allocation
-    const amount_0_max = new anchor.BN(1000000000);
+    const percentage = 100 * 10_000; // 100% allocation
+    const amount_0_max = new anchor.BN(1_000_000_000);
     const amount_1_max = new anchor.BN(3051827671);
     const strategyId = 1;
     const strategyConfigName = VAULT_STRATEGY_CONFIG_NAME;

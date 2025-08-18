@@ -51,6 +51,11 @@ pub mod tokenized_vaults_program {
         init_vault_strategy_config::handler(ctx, name, performance_fee, vault_strategy_type)
     }
 
+    #[instruction(discriminator = DISC_ACTIVATE_VAULT_STRATEGY_CONFIG_IX)]
+    pub fn activate_vault_strategy_config(ctx: Context<ActivateVaultStrategyConfig>) -> Result<()> {
+        activate_vault_strategy_config::handler(ctx)
+    }
+
     #[instruction(discriminator = DISC_PAUSE_VAULT_IX)]
     pub fn pause_vault(ctx: Context<PauseVault>) -> Result<()> {
         pause_vault::handler(ctx)
