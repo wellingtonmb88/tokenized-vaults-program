@@ -236,7 +236,7 @@ export type TokenizedVaultsProgram = {
         },
         {
           "name": "raydiumClmmProgram",
-          "address": "devi51mZmdwUJGU9hjN27vEz64Gps7uUefqxg27EAtH"
+          "address": "CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK"
         },
         {
           "name": "raydiumPositionNftAccount",
@@ -692,7 +692,7 @@ export type TokenizedVaultsProgram = {
         },
         {
           "name": "raydiumClmmProgram",
-          "address": "devi51mZmdwUJGU9hjN27vEz64Gps7uUefqxg27EAtH"
+          "address": "CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK"
         },
         {
           "name": "raydiumPositionNftMint",
@@ -1923,7 +1923,7 @@ export type TokenizedVaultsProgram = {
         },
         {
           "name": "raydiumClmmProgram",
-          "address": "devi51mZmdwUJGU9hjN27vEz64Gps7uUefqxg27EAtH"
+          "address": "CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK"
         },
         {
           "name": "raydiumPositionNftAccount",
@@ -2279,7 +2279,7 @@ export type TokenizedVaultsProgram = {
         },
         {
           "name": "raydiumClmmProgram",
-          "address": "devi51mZmdwUJGU9hjN27vEz64Gps7uUefqxg27EAtH"
+          "address": "CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK"
         },
         {
           "name": "raydiumPoolState",
